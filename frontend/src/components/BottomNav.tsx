@@ -13,12 +13,12 @@ export const BottomNav: React.FC = () => {
   const { t } = useLanguage();
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-navy text-slate-300 border-t border-navy-muted flex items-center justify-around z-40 px-2 shadow-2xl">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-slate-950/80 backdrop-blur-2xl text-slate-300 border-t border-white/10 flex items-center justify-around z-40 px-2 shadow-2xl">
       <NavLink
         to="/dashboard"
         className={({ isActive }) =>
           `flex flex-col items-center justify-center gap-1 text-[10px] font-semibold transition ${
-            isActive ? 'text-coral' : 'text-slate-400 hover:text-white'
+            isActive ? 'text-aurora-purple' : 'text-slate-400 hover:text-white'
           }`
         }
       >
@@ -30,7 +30,7 @@ export const BottomNav: React.FC = () => {
         to="/inventory"
         className={({ isActive }) =>
           `flex flex-col items-center justify-center gap-1 text-[10px] font-semibold transition ${
-            isActive ? 'text-coral' : 'text-slate-400 hover:text-white'
+            isActive ? 'text-aurora-purple' : 'text-slate-400 hover:text-white'
           }`
         }
       >
@@ -41,7 +41,7 @@ export const BottomNav: React.FC = () => {
       {/* Elevated POS Center Button */}
       <NavLink
         to="/pos"
-        className="flex flex-col items-center justify-center -mt-6 bg-coral hover:bg-coral-hover text-white w-13 h-13 p-3 rounded-full shadow-2xl ring-4 ring-pearl active:scale-95 transition"
+        className="flex flex-col items-center justify-center -mt-7 bg-gradient-to-r from-coral to-aurora-purple text-white w-14 h-14 p-3 rounded-full shadow-glow-coral border-2 border-slate-950 ring-2 ring-aurora-purple/40 active:scale-95 transition"
       >
         <ShoppingCart className="w-6 h-6" />
       </NavLink>
@@ -50,7 +50,7 @@ export const BottomNav: React.FC = () => {
         to="/udhaar"
         className={({ isActive }) =>
           `flex flex-col items-center justify-center gap-1 text-[10px] font-semibold transition ${
-            isActive ? 'text-coral' : 'text-slate-400 hover:text-white'
+            isActive ? 'text-aurora-purple' : 'text-slate-400 hover:text-white'
           }`
         }
       >
@@ -62,7 +62,7 @@ export const BottomNav: React.FC = () => {
         to="/settings"
         className={({ isActive }) =>
           `flex flex-col items-center justify-center gap-1 text-[10px] font-semibold transition ${
-            isActive ? 'text-coral' : 'text-slate-400 hover:text-white'
+            isActive ? 'text-aurora-purple' : 'text-slate-400 hover:text-white'
           }`
         }
       >

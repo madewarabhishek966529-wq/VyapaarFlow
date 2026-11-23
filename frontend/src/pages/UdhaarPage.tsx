@@ -13,7 +13,9 @@ import {
   TrendingUp,
   CreditCard,
   PhoneCall,
-  History
+  History,
+  AlertCircle,
+  Sparkles
 } from 'lucide-react';
 
 export const UdhaarPage: React.FC = () => {
@@ -103,58 +105,63 @@ export const UdhaarPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 relative z-10">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-navy text-white p-5 rounded-2xl shadow-xl">
+      <div className="glass-card p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-black tracking-tight flex items-center gap-2">
-            <BookOpen className="w-6 h-6 text-coral" />
+          <div className="flex items-center gap-2 mb-1">
+            <span className="bento-tag bg-warning/15 text-warning border-warning/30">
+              <BookOpen className="w-3.5 h-3.5" />
+              Customer Credit Recovery
+            </span>
+          </div>
+          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-2">
             <span>{t('udhaar.title')}</span>
           </h1>
-          <p className="text-xs text-slate-300 mt-1">
-            Immutable customer credit ledger, running balances & 1-click WhatsApp payment reminders
+          <p className="text-xs text-slate-400 mt-1">
+            Immutable customer credit ledger, running balances & 1-click WhatsApp payment reminders with UPI links.
           </p>
         </div>
       </div>
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-2xl border border-softgrey-border shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 block">{t('udhaar.totalOutstanding')}</span>
-          <div className="text-xl md:text-2xl font-black text-coral mt-1">
+        <div className="glass-card glass-card-hover p-5">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">{t('udhaar.totalOutstanding')}</span>
+          <div className="text-2xl md:text-3xl font-black text-coral mt-1 tracking-tight">
             {formatCurrency(summary.totalOutstanding || 0)}
           </div>
-          <span className="text-[11px] text-slate-500 block mt-1">Net pending credit to collect</span>
+          <span className="text-[11px] text-slate-400 block mt-1">Net pending credit to collect</span>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-softgrey-border shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 block">{t('udhaar.debtorsCount')}</span>
-          <div className="text-xl md:text-2xl font-black text-navy mt-1">
+        <div className="glass-card glass-card-hover p-5">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">{t('udhaar.debtorsCount')}</span>
+          <div className="text-2xl md:text-3xl font-black text-white mt-1 tracking-tight">
             {summary.debtorsCount || 0}
           </div>
-          <span className="text-[11px] text-slate-500 block mt-1">Active customer accounts</span>
+          <span className="text-[11px] text-slate-400 block mt-1">Active customer accounts</span>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-softgrey-border shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 block">{t('udhaar.totalCredit')}</span>
-          <div className="text-xl md:text-2xl font-black text-navy mt-1">
+        <div className="glass-card glass-card-hover p-5">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">{t('udhaar.totalCredit')}</span>
+          <div className="text-2xl md:text-3xl font-black text-aurora-purple mt-1 tracking-tight">
             {formatCurrency(summary.totalCreditGiven || 0)}
           </div>
-          <span className="text-[11px] text-slate-500 block mt-1">Cumulative credit granted</span>
+          <span className="text-[11px] text-slate-400 block mt-1">Cumulative credit granted</span>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-softgrey-border shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 block">{t('udhaar.totalCollected')}</span>
-          <div className="text-xl md:text-2xl font-black text-success mt-1">
+        <div className="glass-card glass-card-hover p-5">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">{t('udhaar.totalCollected')}</span>
+          <div className="text-2xl md:text-3xl font-black text-emerald-400 mt-1 tracking-tight">
             {formatCurrency(summary.totalCollected || 0)}
           </div>
-          <span className="text-[11px] text-slate-500 block mt-1">Total repayments received</span>
+          <span className="text-[11px] text-slate-400 block mt-1">Total repayments received</span>
         </div>
       </div>
 
       {/* Search & Debtors List */}
-      <div className="bg-white rounded-2xl border border-softgrey-border shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-softgrey-border flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <div className="glass-card overflow-hidden">
+        <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -162,7 +169,7 @@ export const UdhaarPage: React.FC = () => {
               placeholder="Search customer by name or mobile..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-pearl border border-softgrey-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-coral"
+              className="w-full pl-9 pr-3 py-2.5 bg-slate-900/80 border border-white/10 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-aurora-purple/50 font-medium"
             />
           </div>
         </div>
@@ -170,15 +177,15 @@ export const UdhaarPage: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead>
-              <tr className="bg-pearl text-slate-600 font-bold border-b border-softgrey-border">
-                <th className="p-3.5">Customer Name & Code</th>
-                <th className="p-3.5">Mobile</th>
-                <th className="p-3.5 text-right">Total Purchases</th>
-                <th className="p-3.5 text-right">Pending Udhaar Due</th>
-                <th className="p-3.5 text-center">Actions</th>
+              <tr className="text-slate-400 font-bold border-b border-white/10">
+                <th className="p-4">Customer Name & Code</th>
+                <th className="p-4">Mobile</th>
+                <th className="p-4 text-right">Total Purchases</th>
+                <th className="p-4 text-right">Pending Udhaar Due</th>
+                <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-softgrey-border">
+            <tbody className="divide-y divide-white/5">
               {isLoading ? (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-slate-400">
@@ -193,19 +200,19 @@ export const UdhaarPage: React.FC = () => {
                 </tr>
               ) : (
                 customers.map((c) => (
-                  <tr key={c._id} className="hover:bg-pearl/50 transition">
-                    <td className="p-3.5">
-                      <div className="font-bold text-navy text-sm">{c.name}</div>
-                      <div className="text-[11px] text-slate-400">{c.customerCode}</div>
+                  <tr key={c._id} className="hover:bg-white/[0.03] transition">
+                    <td className="p-4">
+                      <div className="font-bold text-white text-sm">{c.name}</div>
+                      <div className="text-[11px] text-slate-400 font-mono">{c.customerCode}</div>
                     </td>
-                    <td className="p-3.5 font-semibold text-slate-700">{c.mobile}</td>
-                    <td className="p-3.5 text-right font-medium text-slate-600">
+                    <td className="p-4 font-semibold text-slate-300">{c.mobile}</td>
+                    <td className="p-4 text-right font-medium text-slate-400">
                       {formatCurrency(c.totalPurchases)}
                     </td>
-                    <td className="p-3.5 text-right font-black text-coral text-sm">
+                    <td className="p-4 text-right font-black text-coral text-sm">
                       {formatCurrency(c.currentBalance)}
                     </td>
-                    <td className="p-3.5 text-center">
+                    <td className="p-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         {/* Record Repayment Button */}
                         <button
@@ -214,7 +221,7 @@ export const UdhaarPage: React.FC = () => {
                             setRepayAmount(c.currentBalance.toString());
                             setIsRepayModalOpen(true);
                           }}
-                          className="px-3 py-1.5 bg-success hover:bg-success-dark text-white font-bold rounded-lg text-xs shadow-sm transition"
+                          className="px-3.5 py-1.5 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30 font-bold rounded-xl text-xs shadow-glow-emerald transition active:scale-95"
                         >
                           Collect ₹
                         </button>
@@ -222,10 +229,10 @@ export const UdhaarPage: React.FC = () => {
                         {/* WhatsApp Reminder Button */}
                         <button
                           onClick={() => handleSendReminder(c._id)}
-                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow-sm flex items-center gap-1 transition"
+                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-md flex items-center gap-1.5 transition active:scale-95"
                           title="Send pre-filled WhatsApp reminder with UPI payment link"
                         >
-                          <Send className="w-3 h-3" />
+                          <Send className="w-3.5 h-3.5" />
                           <span>WhatsApp</span>
                         </button>
 
@@ -235,7 +242,7 @@ export const UdhaarPage: React.FC = () => {
                             setLedgerCustomer(c);
                             setIsLedgerModalOpen(true);
                           }}
-                          className="p-1.5 bg-softgrey hover:bg-softgrey-border text-navy rounded-lg transition"
+                          className="p-2 bg-white/5 hover:bg-white/10 text-slate-300 rounded-xl border border-white/10 transition"
                           title="View Ledger Statement"
                         >
                           <History className="w-3.5 h-3.5" />
@@ -254,138 +261,139 @@ export const UdhaarPage: React.FC = () => {
       <Modal
         isOpen={isRepayModalOpen}
         onClose={() => setIsRepayModalOpen(false)}
-        title={`Record Payment: ${selectedCustomer?.name}`}
+        title={`Record Udhaar Repayment: ${selectedCustomer?.name}`}
         maxWidth="max-w-md"
       >
         <form onSubmit={handleRepaySubmit} className="space-y-4 text-xs">
-          <div className="bg-pearl p-3 rounded-xl border border-softgrey-border flex justify-between items-center">
+          <div className="p-4 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-between">
             <div>
-              <span className="text-slate-500 block">Total Udhaar Due:</span>
-              <span className="text-lg font-black text-coral">
-                {formatCurrency(selectedCustomer?.currentBalance)}
+              <span className="text-slate-400 text-xs block">Outstanding Due:</span>
+              <span className="text-xl font-black text-coral">
+                {formatCurrency(selectedCustomer?.currentBalance || 0)}
               </span>
             </div>
             <button
               type="button"
-              onClick={() => setRepayAmount(selectedCustomer?.currentBalance.toString())}
-              className="px-2.5 py-1 bg-coral/10 text-coral rounded-lg font-bold hover:bg-coral/20"
+              onClick={() => setRepayAmount(selectedCustomer?.currentBalance.toString() || '')}
+              className="text-xs bg-white/10 hover:bg-white/15 text-white font-bold px-3 py-1.5 rounded-xl border border-white/10"
             >
-              Full Pay
+              Pay Full Amount
             </button>
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Repayment Amount (₹) *</label>
+            <label className="font-bold text-slate-300 block mb-1">Repayment Amount (₹) *</label>
             <input
               type="number"
               step="any"
-              min="1"
+              min="0.01"
               required
               value={repayAmount}
               onChange={(e) => setRepayAmount(e.target.value)}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-black text-sm text-navy"
+              className="w-full px-3.5 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white font-bold text-sm"
+              placeholder="0.00"
             />
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Payment Method</label>
+            <label className="font-bold text-slate-300 block mb-1">Payment Method *</label>
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-semibold"
+              className="w-full px-3.5 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
             >
               <option value="CASH">Cash</option>
-              <option value="UPI">UPI / GPay / PhonePe</option>
+              <option value="UPI">UPI / QR Code</option>
+              <option value="CARD">Card</option>
               <option value="BANK_TRANSFER">Bank Transfer / NEFT</option>
             </select>
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Reference Number / Note</label>
+            <label className="font-bold text-slate-300 block mb-1">Reference / UTR Number</label>
             <input
               type="text"
-              placeholder="e.g. UPI Ref 321876543210"
               value={referenceNumber}
               onChange={(e) => setReferenceNumber(e.target.value)}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl"
+              className="w-full px-3.5 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
+              placeholder="e.g. UPI Ref: 312345678901"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-softgrey-border">
+          <div>
+            <label className="font-bold text-slate-300 block mb-1">Notes</label>
+            <input
+              type="text"
+              value={repayNotes}
+              onChange={(e) => setRepayNotes(e.target.value)}
+              className="w-full px-3.5 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
+              placeholder="Optional notes"
+            />
+          </div>
+
+          <div className="pt-3 border-t border-white/10 flex justify-end gap-2">
             <button
               type="button"
               onClick={() => setIsRepayModalOpen(false)}
-              className="px-4 py-2 bg-softgrey hover:bg-softgrey-border text-navy font-semibold rounded-xl"
+              className="px-4 py-2 bg-white/5 text-slate-300 rounded-xl border border-white/10"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={recordPaymentMutation.isPending}
-              className="px-5 py-2 bg-success hover:bg-success-dark text-white font-bold rounded-xl shadow"
+              className="px-5 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl shadow-glow-emerald"
             >
-              {recordPaymentMutation.isPending ? 'Recording...' : 'Record Payment'}
+              {recordPaymentMutation.isPending ? 'Recording...' : 'Confirm Repayment'}
             </button>
           </div>
         </form>
       </Modal>
 
-      {/* Customer Ledger Statement Drawer / Modal */}
+      {/* Customer Full Ledger Statement Modal */}
       <Modal
         isOpen={isLedgerModalOpen}
         onClose={() => setIsLedgerModalOpen(false)}
-        title={`Customer Ledger: ${ledgerCustomer?.name}`}
-        maxWidth="max-w-2xl"
+        title={`Udhaar Khata Ledger: ${ledgerCustomer?.name}`}
+        maxWidth="max-w-3xl"
       >
         <div className="space-y-4 text-xs">
-          <div className="flex justify-between items-center p-3 bg-pearl rounded-xl border border-softgrey-border">
+          <div className="p-4 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-between">
             <div>
-              <div className="font-bold text-navy text-sm">{ledgerCustomer?.name}</div>
-              <div className="text-[11px] text-slate-500">Ph: {ledgerCustomer?.mobile}</div>
+              <span className="text-slate-400 block">Current Balance Due:</span>
+              <span className="text-xl font-black text-coral">
+                {formatCurrency(ledgerCustomer?.currentBalance || 0)}
+              </span>
             </div>
             <div className="text-right">
-              <span className="text-[11px] text-slate-500">Net Due:</span>
-              <div className="text-base font-black text-coral">
-                {formatCurrency(ledgerCustomer?.currentBalance)}
-              </div>
+              <span className="text-slate-400 block">Customer Mobile:</span>
+              <span className="font-bold text-white text-sm">{ledgerCustomer?.mobile}</span>
             </div>
           </div>
 
-          <div className="max-h-80 overflow-y-auto border border-softgrey-border rounded-xl divide-y divide-softgrey-border">
+          <div className="max-h-80 overflow-y-auto divide-y divide-white/5 border border-white/10 rounded-2xl bg-white/[0.02]">
             {ledgerEntries.length === 0 ? (
-              <div className="p-6 text-center text-slate-400">No ledger entries found</div>
+              <div className="p-6 text-center text-slate-400">No ledger transactions recorded</div>
             ) : (
-              ledgerEntries.map((item: any) => (
-                <div key={item._id} className="p-3 hover:bg-pearl/50 flex items-center justify-between">
+              ledgerEntries.map((l: any) => (
+                <div key={l._id} className="p-3.5 flex items-center justify-between hover:bg-white/[0.03]">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${
-                          item.type === 'CREDIT_GIVEN'
-                            ? 'bg-rose-100 text-rose-700'
-                            : 'bg-emerald-100 text-emerald-700'
-                        }`}
-                      >
-                        {item.type === 'CREDIT_GIVEN' ? 'CREDIT GIVEN' : 'PAYMENT RECEIVED'}
-                      </span>
-                      <span className="text-[11px] text-slate-400">{formatDateTime(item.createdAt)}</span>
-                    </div>
-                    <div className="text-[11px] text-slate-600 mt-1">
-                      {item.notes} {item.invoiceNumber && `(Bill #${item.invoiceNumber})`}
-                    </div>
+                    <span className="font-bold text-white block">{l.type}</span>
+                    <span className="text-[11px] text-slate-400">{l.notes || l.referenceNumber || 'Ledger entry'}</span>
+                    <span className="text-[10px] text-slate-500 block">{formatDateTime(l.transactionDate)}</span>
                   </div>
                   <div className="text-right">
-                    <div
-                      className={`font-black text-sm ${
-                        item.type === 'CREDIT_GIVEN' ? 'text-coral' : 'text-success'
+                    <span
+                      className={`font-black text-sm block ${
+                        l.type === 'CREDIT_SALE' ? 'text-coral' : 'text-emerald-400'
                       }`}
                     >
-                      {item.type === 'CREDIT_GIVEN' ? '+' : '-'}
-                      {formatCurrency(item.amount)}
-                    </div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">
-                      Bal: {formatCurrency(item.balanceAfter)}
-                    </div>
+                      {l.type === 'CREDIT_SALE' ? '+' : '-'}
+                      {formatCurrency(l.amount)}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      Bal: {formatCurrency(l.balanceAfter)}
+                    </span>
                   </div>
                 </div>
               ))

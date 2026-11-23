@@ -4,25 +4,158 @@
 
 @layer base {
   body {
-    @apply bg-pearl text-navy antialiased;
+    background-color: #070A12;
+    color: #F8F9FC;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  ::selection {
+    background-color: #8B5CF6;
+    color: #FFFFFF;
   }
 }
 
-/* Custom scrollbar for sleek POS product table */
+/* ============================================================ */
+/* Dynamic Aurora Background & Color Gradients */
+/* ============================================================ */
+.aurora-mesh {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.aurora-orb-1 {
+  position: absolute;
+  top: -15%;
+  left: 10%;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.32) 0%, rgba(99, 102, 241, 0.18) 45%, transparent 70%);
+  filter: blur(80px);
+}
+
+.aurora-orb-2 {
+  position: absolute;
+  top: -10%;
+  right: 12%;
+  width: 650px;
+  height: 650px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.25) 0%, rgba(139, 92, 246, 0.14) 50%, transparent 70%);
+  filter: blur(90px);
+}
+
+.aurora-orb-3 {
+  position: absolute;
+  bottom: 0%;
+  left: 25%;
+  width: 700px;
+  height: 700px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.18) 0%, rgba(99, 102, 241, 0.1) 55%, transparent 75%);
+  filter: blur(100px);
+}
+
+.aurora-grid-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.65;
+}
+
+/* ============================================================ */
+/* Glassmorphism & Bento Utilities */
+/* ============================================================ */
+@layer components {
+  .glass-card {
+    background-color: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1.25rem;
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .glass-card-hover {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .glass-card-hover:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(15, 23, 42, 0.78);
+    transform: translateY(-2px);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.15), 0 16px 40px -10px rgba(139, 92, 246, 0.18);
+  }
+
+  .bento-tag {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-white/5 border border-white/10 text-slate-300;
+  }
+
+  .glass-input {
+    @apply bg-slate-900/80 border border-white/10 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-aurora-purple/50 focus:border-aurora-purple/60 transition text-xs;
+  }
+}
+
+/* ============================================================ */
+/* Global Theme Harmonization for Dark Glassmorphism */
+/* ============================================================ */
+.bg-white {
+  background-color: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-color: rgba(255, 255, 255, 0.09) !important;
+}
+
+.bg-white.rounded-2xl {
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 8px 32px 0 rgba(0, 0, 0, 0.35);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bg-pearl, .bg-pearl-dark {
+  background-color: rgba(255, 255, 255, 0.035) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.bg-softgrey, .bg-softgrey-light {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.text-navy {
+  color: #F8F9FC !important;
+}
+
+.border-softgrey-border {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.divide-softgrey-border > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+input, select, textarea {
+  color: #F8F9FC;
+}
+
+/* Custom Sleek Dark Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f3f9;
+  background: #0B0F19;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #334155;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #475569;
 }
 
 /* Thermal receipt printable styles */
@@ -40,5 +173,7 @@
     width: 100%;
     margin: 0;
     padding: 0;
+    background-color: white !important;
+    color: black !important;
   }
 }

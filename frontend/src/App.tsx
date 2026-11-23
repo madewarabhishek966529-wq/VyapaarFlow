@@ -39,8 +39,15 @@ const ProtectedLayout: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-pearl flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-coral border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-obsidian flex items-center justify-center relative overflow-hidden">
+        <div className="aurora-mesh" aria-hidden="true">
+          <div className="aurora-orb-1 animate-aurora-1" />
+          <div className="aurora-orb-2 animate-aurora-2" />
+        </div>
+        <div className="relative z-10 flex flex-col items-center gap-3">
+          <div className="w-12 h-12 border-4 border-aurora-purple border-t-transparent rounded-full animate-spin shadow-glow-purple"></div>
+          <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">Loading VyapaarFlow...</span>
+        </div>
       </div>
     );
   }
@@ -55,9 +62,17 @@ const ProtectedLayout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-pearl">
+    <div className="min-h-screen flex flex-col bg-obsidian text-slate-100 relative overflow-x-hidden">
+      {/* Dynamic Ambient Aurora Background Mesh */}
+      <div className="aurora-mesh" aria-hidden="true">
+        <div className="aurora-orb-1 animate-aurora-1" />
+        <div className="aurora-orb-2 animate-aurora-2" />
+        <div className="aurora-orb-3 animate-aurora-3" />
+        <div className="aurora-grid-dots" />
+      </div>
+
       <Navbar />
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative z-10">
         <Sidebar />
         <main className="flex-1 overflow-y-auto pb-20 md:pb-6">
           <Routes>

@@ -15,7 +15,9 @@ import {
   Edit2,
   Trash2,
   CheckCircle,
-  ArrowUpDown
+  ArrowUpDown,
+  Sparkles,
+  Tag
 } from 'lucide-react';
 
 export const InventoryPage: React.FC = () => {
@@ -108,6 +110,16 @@ export const InventoryPage: React.FC = () => {
     }
   });
 
+  const deleteProductMutation = useMutation({
+    mutationFn: (productId: string) => api.delete(`/products/${productId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+    onError: (err: any) => {
+      alert(`Failed to delete product: ${err.message}`);
+    }
+  });
+
   const openAddModal = () => {
     setEditingProduct(null);
     setFormData({
@@ -135,11 +147,11 @@ export const InventoryPage: React.FC = () => {
       barcode: product.barcode || '',
       category: product.category,
       brand: product.brand || '',
-      unit: product.unit || 'pcs',
+      unit: product.unit,
       purchasePrice: product.purchasePrice,
       sellingPrice: product.sellingPrice,
       mrp: product.mrp,
-      taxRate: product.taxRate || 0,
+      taxRate: product.taxRate,
       currentStock: product.currentStock,
       minStockLevel: product.minStockLevel || 5
     });
@@ -171,30 +183,36 @@ export const InventoryPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
+    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-5 relative z-10">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-softgrey-border shadow-sm">
+      <div className="glass-card p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-black text-navy flex items-center gap-2">
-            <Boxes className="w-5 h-5 text-coral" />
+          <div className="flex items-center gap-2 mb-1">
+            <span className="bento-tag bg-aurora-cyan/15 text-aurora-cyan border-aurora-cyan/30">
+              <Boxes className="w-3.5 h-3.5" />
+              Catalogue & Stock Ledger
+            </span>
+          </div>
+          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-2">
             <span>{t('inventory.title')}</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Manage catalogue, prices, barcode scans, and stock movement ledger
+          <p className="text-xs text-slate-400 mt-1">
+            Manage product prices, barcodes, units, and auditable stock movement transactions.
           </p>
         </div>
 
         <button
           onClick={openAddModal}
-          className="flex items-center gap-1.5 px-4 py-2.5 bg-coral hover:bg-coral-hover text-white text-xs font-bold rounded-xl shadow-md transition active:scale-95"
+          className="group relative flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-coral via-rose-500 to-aurora-purple text-white text-xs font-bold rounded-2xl shadow-glow-coral transition transform hover:-translate-y-0.5 active:scale-95 overflow-hidden"
         >
+          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
           <Plus className="w-4 h-4" />
           <span>{t('inventory.addProductBtn')}</span>
         </button>
       </div>
 
       {/* Filters Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-softgrey-border shadow-sm text-xs">
+      <div className="glass-card p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs">
         {/* Search */}
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -203,7 +221,7 @@ export const InventoryPage: React.FC = () => {
             placeholder="Search by product name, barcode, SKU, brand..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-pearl border border-softgrey-border rounded-xl focus:outline-none focus:ring-2 focus:ring-coral text-xs"
+            className="w-full pl-9 pr-3 py-2.5 bg-slate-900/80 border border-white/10 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-aurora-purple/50 font-medium"
           />
         </div>
 
@@ -211,7 +229,7 @@ export const InventoryPage: React.FC = () => {
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-medium text-slate-700 focus:outline-none"
+          className="px-3 py-2.5 bg-slate-900/80 border border-white/10 rounded-xl font-medium text-slate-300 focus:outline-none focus:ring-2 focus:ring-aurora-purple/50"
         >
           <option value="All">All Categories</option>
           {DEFAULT_CATEGORIES.map((c) => (
@@ -224,10 +242,10 @@ export const InventoryPage: React.FC = () => {
         {/* Low Stock Toggle */}
         <button
           onClick={() => setLowStockFilter(!lowStockFilter)}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-semibold border transition ${
+          className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl font-semibold border transition active:scale-95 ${
             lowStockFilter
-              ? 'bg-coral text-white border-coral shadow-sm'
-              : 'bg-pearl text-slate-600 border-softgrey-border hover:bg-softgrey-light'
+              ? 'bg-coral/20 border-coral text-coral shadow-glow-coral'
+              : 'bg-white/5 text-slate-300 border-white/10 hover:border-white/20'
           }`}
         >
           <AlertTriangle className="w-3.5 h-3.5" />
@@ -236,22 +254,22 @@ export const InventoryPage: React.FC = () => {
       </div>
 
       {/* Products Table */}
-      <div className="bg-white rounded-2xl border border-softgrey-border shadow-sm overflow-hidden">
+      <div className="glass-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead>
-              <tr className="bg-pearl text-slate-600 font-bold border-b border-softgrey-border">
-                <th className="p-3.5">Product Name & SKU</th>
-                <th className="p-3.5">Category</th>
-                <th className="p-3.5 text-center">Stock Status</th>
-                <th className="p-3.5 text-right">Cost Price</th>
-                <th className="p-3.5 text-right">Selling Rate</th>
-                <th className="p-3.5 text-right">MRP</th>
-                <th className="p-3.5 text-center">GST %</th>
-                <th className="p-3.5 text-center">Actions</th>
+              <tr className="text-slate-400 font-bold border-b border-white/10">
+                <th className="p-4">Product Name & SKU</th>
+                <th className="p-4">Category</th>
+                <th className="p-4 text-center">Stock Status</th>
+                <th className="p-4 text-right">Cost Price</th>
+                <th className="p-4 text-right">Selling Rate</th>
+                <th className="p-4 text-right">MRP</th>
+                <th className="p-4 text-center">GST %</th>
+                <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-softgrey-border">
+            <tbody className="divide-y divide-white/5">
               {isLoading ? (
                 <tr>
                   <td colSpan={8} className="p-8 text-center text-slate-400">
@@ -270,43 +288,43 @@ export const InventoryPage: React.FC = () => {
                   const isOut = p.currentStock <= 0;
 
                   return (
-                    <tr key={p._id} className="hover:bg-pearl/50 transition">
-                      <td className="p-3.5">
-                        <div className="font-bold text-navy text-sm">{p.name}</div>
+                    <tr key={p._id} className="hover:bg-white/[0.03] transition">
+                      <td className="p-4">
+                        <div className="font-bold text-white text-sm">{p.name}</div>
                         <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-2">
-                          <span className="font-mono bg-slate-100 px-1.5 py-0.2 rounded text-slate-600 font-medium">
+                          <span className="font-mono bg-white/5 border border-white/10 px-1.5 py-0.2 rounded text-slate-300 font-medium">
                             {p.sku}
                           </span>
                           {p.barcode && <span>Barcode: {p.barcode}</span>}
                           {p.brand && <span>Brand: {p.brand}</span>}
                         </div>
                       </td>
-                      <td className="p-3.5 text-slate-600 font-medium">{p.category}</td>
-                      <td className="p-3.5 text-center">
+                      <td className="p-4 text-slate-300 font-medium">{p.category}</td>
+                      <td className="p-4 text-center">
                         <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
                             isOut
-                              ? 'bg-rose-100 text-rose-700'
+                              ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
                               : isLow
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-emerald-100 text-emerald-800'
+                              ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                              : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-glow-emerald'
                           }`}
                         >
                           {p.currentStock} {p.unit}
                         </span>
                       </td>
-                      <td className="p-3.5 text-right font-medium text-slate-500">
+                      <td className="p-4 text-right font-medium text-slate-400">
                         {formatCurrency(p.purchasePrice)}
                       </td>
-                      <td className="p-3.5 text-right font-bold text-navy">
+                      <td className="p-4 text-right font-black text-white text-sm">
                         {formatCurrency(p.sellingPrice)}
                       </td>
-                      <td className="p-3.5 text-right font-medium text-slate-400 line-through">
+                      <td className="p-4 text-right font-medium text-slate-500 line-through">
                         {formatCurrency(p.mrp)}
                       </td>
-                      <td className="p-3.5 text-center font-semibold text-slate-600">{p.taxRate}%</td>
-                      <td className="p-3.5 text-center">
-                        <div className="flex items-center justify-center gap-1">
+                      <td className="p-4 text-center font-semibold text-slate-300">{p.taxRate}%</td>
+                      <td className="p-4 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
                           {/* Stock Adjust button */}
                           <button
                             onClick={() => {
@@ -314,7 +332,7 @@ export const InventoryPage: React.FC = () => {
                               setAdjustData({ type: 'ADJUSTMENT_ADD', quantity: 1, reason: '' });
                               setIsAdjustModalOpen(true);
                             }}
-                            className="p-1.5 text-slate-500 hover:text-navy hover:bg-softgrey rounded-lg transition"
+                            className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition"
                             title="Adjust Stock"
                           >
                             <ArrowUpDown className="w-3.5 h-3.5" />
@@ -326,7 +344,7 @@ export const InventoryPage: React.FC = () => {
                               setHistoryProduct(p);
                               setIsHistoryModalOpen(true);
                             }}
-                            className="p-1.5 text-slate-500 hover:text-coral hover:bg-softgrey rounded-lg transition"
+                            className="p-1.5 text-slate-400 hover:text-aurora-purple hover:bg-white/10 rounded-lg transition"
                             title="Stock Movement Ledger"
                           >
                             <History className="w-3.5 h-3.5" />
@@ -335,7 +353,7 @@ export const InventoryPage: React.FC = () => {
                           {/* Edit button */}
                           <button
                             onClick={() => openEditModal(p)}
-                            className="p-1.5 text-slate-500 hover:text-navy hover:bg-softgrey rounded-lg transition"
+                            className="p-1.5 text-slate-400 hover:text-coral hover:bg-white/10 rounded-lg transition"
                             title="Edit Product"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
@@ -361,45 +379,45 @@ export const InventoryPage: React.FC = () => {
         <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Product Name *</label>
+              <label className="font-bold text-slate-300 block mb-1">Product Name *</label>
               <input
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl"
+                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
                 placeholder="e.g. Aashirvaad Atta 10kg"
               />
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">SKU Code *</label>
+              <label className="font-bold text-slate-300 block mb-1">SKU Code *</label>
               <input
                 type="text"
                 required
                 value={formData.sku}
                 onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-mono"
+                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl font-mono text-white"
               />
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Barcode (EAN / UPC)</label>
+              <label className="font-bold text-slate-300 block mb-1">Barcode (EAN / UPC)</label>
               <input
                 type="text"
                 value={formData.barcode}
                 onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-mono"
+                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl font-mono text-white"
                 placeholder="e.g. 8901030012011"
               />
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Category *</label>
+              <label className="font-bold text-slate-300 block mb-1">Category *</label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl"
+                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
               >
                 {DEFAULT_CATEGORIES.map((c) => (
                   <option key={c} value={c}>
@@ -410,11 +428,11 @@ export const InventoryPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Unit of Measurement</label>
+              <label className="font-bold text-slate-300 block mb-1">Unit of Measurement</label>
               <select
                 value={formData.unit}
                 onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl"
+                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
               >
                 {UNITS.map((u) => (
                   <option key={u.code} value={u.code}>
@@ -425,18 +443,18 @@ export const InventoryPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Brand</label>
+              <label className="font-bold text-slate-300 block mb-1">Brand</label>
               <input
                 type="text"
                 value={formData.brand}
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl"
+                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
                 placeholder="e.g. ITC, Tata, Amul"
               />
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Purchase Price (Cost ₹) *</label>
+              <label className="font-bold text-slate-300 block mb-1">Purchase Price (Cost ₹) *</label>
               <input
                 type="number"
                 step="0.01"
@@ -444,12 +462,12 @@ export const InventoryPage: React.FC = () => {
                 required
                 value={formData.purchasePrice}
                 onChange={(e) => setFormData({ ...formData, purchasePrice: e.target.value as any })}
-                className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-bold"
+                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl font-bold text-white"
               />
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Selling Rate (₹) *</label>
+              <label className="font-bold text-slate-300 block mb-1">Selling Price (Retail ₹) *</label>
               <input
                 type="number"
                 step="0.01"
@@ -457,12 +475,12 @@ export const InventoryPage: React.FC = () => {
                 required
                 value={formData.sellingPrice}
                 onChange={(e) => setFormData({ ...formData, sellingPrice: e.target.value as any })}
-                className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-bold text-coral"
+                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl font-bold text-coral"
               />
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">MRP (₹) *</label>
+              <label className="font-bold text-slate-300 block mb-1">MRP ₹ *</label>
               <input
                 type="number"
                 step="0.01"
@@ -470,63 +488,65 @@ export const InventoryPage: React.FC = () => {
                 required
                 value={formData.mrp}
                 onChange={(e) => setFormData({ ...formData, mrp: e.target.value as any })}
-                className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-bold"
+                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
               />
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">GST Tax Slab</label>
+              <label className="font-bold text-slate-300 block mb-1">GST Tax Slab *</label>
               <select
                 value={formData.taxRate}
-                onChange={(e) => setFormData({ ...formData, taxRate: e.target.value as any })}
-                className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl"
+                onChange={(e) => setFormData({ ...formData, taxRate: parseFloat(e.target.value) })}
+                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
               >
-                {GST_SLABS.map((rate) => (
-                  <option key={rate} value={rate}>
-                    {rate}% GST
+                {GST_SLABS.map((slab) => (
+                  <option key={slab} value={slab}>
+                    {slab}% GST
                   </option>
                 ))}
               </select>
             </div>
 
-            <div>
-              <label className="font-bold text-slate-700 block mb-1">Current Stock *</label>
-              <input
-                type="number"
-                min="0"
-                required
-                value={formData.currentStock}
-                onChange={(e) => setFormData({ ...formData, currentStock: e.target.value as any })}
-                className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-bold"
-              />
-            </div>
+            {!editingProduct && (
+              <div>
+                <label className="font-bold text-slate-300 block mb-1">Initial Opening Stock *</label>
+                <input
+                  type="number"
+                  min="0"
+                  required
+                  value={formData.currentStock}
+                  onChange={(e) => setFormData({ ...formData, currentStock: e.target.value as any })}
+                  className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl font-bold text-white"
+                />
+              </div>
+            )}
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Min Stock Warning Level</label>
+              <label className="font-bold text-slate-300 block mb-1">Minimum Stock Alert Level</label>
               <input
                 type="number"
                 min="0"
                 value={formData.minStockLevel}
                 onChange={(e) => setFormData({ ...formData, minStockLevel: e.target.value as any })}
-                className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-bold"
+                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-softgrey-border">
+          <div className="pt-4 border-t border-white/10 flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={() => setIsAddEditModalOpen(false)}
-              className="px-4 py-2 bg-softgrey hover:bg-softgrey-border text-navy font-semibold rounded-xl"
+              className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-slate-300 font-semibold rounded-xl border border-white/10 transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saveProductMutation.isPending}
-              className="px-5 py-2 bg-coral hover:bg-coral-hover text-white font-bold rounded-xl shadow"
+              className="px-5 py-2.5 bg-gradient-to-r from-coral to-aurora-purple text-white font-bold rounded-xl shadow-glow-coral transition"
             >
-              {saveProductMutation.isPending ? 'Saving...' : 'Save Product'}
+              {saveProductMutation.isPending ? 'Saving...' : editingProduct ? 'Update Product' : 'Add Product'}
             </button>
           </div>
         </form>
@@ -540,109 +560,106 @@ export const InventoryPage: React.FC = () => {
         maxWidth="max-w-md"
       >
         <form onSubmit={handleAdjustSubmit} className="space-y-4 text-xs">
-          <div className="bg-pearl p-3 rounded-xl border border-softgrey-border">
-            <span className="text-slate-500 block">Current Available Stock:</span>
-            <span className="text-lg font-black text-navy">
+          <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
+            <span className="text-slate-400 block">Current Stock:</span>
+            <span className="text-lg font-black text-white">
               {adjustingProduct?.currentStock} {adjustingProduct?.unit}
             </span>
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Adjustment Action</label>
+            <label className="font-bold text-slate-300 block mb-1">Action Type</label>
             <select
               value={adjustData.type}
               onChange={(e) => setAdjustData({ ...adjustData, type: e.target.value })}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl"
+              className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
             >
-              <option value="ADJUSTMENT_ADD">+ Stock In / Add (Audit correction)</option>
-              <option value="ADJUSTMENT_SUB">- Stock Out / Reduce (Discrepancy)</option>
-              <option value="DAMAGE">- Damaged / Expired Goods</option>
+              <option value="ADJUSTMENT_ADD">Stock-In / Add Units (+)</option>
+              <option value="ADJUSTMENT_SUBTRACT">Stock-Out / Remove Units (-)</option>
+              <option value="DAMAGE_WRITE_OFF">Damaged / Expired Goods (-)</option>
+              <option value="RETURN">Customer Return (+)</option>
             </select>
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Quantity</label>
+            <label className="font-bold text-slate-300 block mb-1">Quantity</label>
             <input
               type="number"
-              min="0.1"
+              min="0.01"
               step="any"
               required
               value={adjustData.quantity}
               onChange={(e) => setAdjustData({ ...adjustData, quantity: e.target.value as any })}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-bold"
+              className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl font-bold text-white"
             />
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Reason for Adjustment *</label>
+            <label className="font-bold text-slate-300 block mb-1">Reason / Notes</label>
             <input
               type="text"
               required
-              placeholder="e.g. Physical inventory count correction"
+              placeholder="e.g. Physical inventory count correction, Broken bottle"
               value={adjustData.reason}
               onChange={(e) => setAdjustData({ ...adjustData, reason: e.target.value })}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl"
+              className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-softgrey-border">
+          <div className="pt-3 border-t border-white/10 flex justify-end gap-2">
             <button
               type="button"
               onClick={() => setIsAdjustModalOpen(false)}
-              className="px-4 py-2 bg-softgrey hover:bg-softgrey-border text-navy font-semibold rounded-xl"
+              className="px-4 py-2 bg-white/5 text-slate-300 rounded-xl border border-white/10"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={adjustStockMutation.isPending}
-              className="px-5 py-2 bg-coral hover:bg-coral-hover text-white font-bold rounded-xl shadow"
+              className="px-4 py-2 bg-gradient-to-r from-coral to-aurora-purple text-white font-bold rounded-xl shadow-glow-coral"
             >
-              Confirm Adjustment
+              {adjustStockMutation.isPending ? 'Updating...' : 'Record Stock Adjustment'}
             </button>
           </div>
         </form>
       </Modal>
 
-      {/* Stock Movement Audit Ledger Modal */}
+      {/* Stock Movement History Ledger Modal */}
       <Modal
         isOpen={isHistoryModalOpen}
         onClose={() => setIsHistoryModalOpen(false)}
-        title={`Stock Movement Ledger: ${historyProduct?.name}`}
+        title={`Audit Trail: ${historyProduct?.name}`}
         maxWidth="max-w-2xl"
       >
         <div className="space-y-3 text-xs">
-          <p className="text-slate-500">
-            Immutable historical audit ledger of all sales deductions, purchases, and manual adjustments.
+          <p className="text-slate-400">
+            Immutable movement ledger of all stock-ins, sales deductions, and adjustments.
           </p>
 
-          <div className="max-h-80 overflow-y-auto border border-softgrey-border rounded-xl divide-y divide-softgrey-border">
+          <div className="max-h-80 overflow-y-auto divide-y divide-white/5 border border-white/10 rounded-2xl bg-white/[0.02]">
             {movements.length === 0 ? (
               <div className="p-6 text-center text-slate-400">No stock movements recorded yet</div>
             ) : (
               movements.map((m: any) => (
-                <div key={m._id} className="p-3 hover:bg-pearl/50 flex items-center justify-between">
+                <div key={m._id} className="p-3.5 flex items-center justify-between hover:bg-white/[0.03]">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-navy">{m.type}</span>
-                      <span className="text-[11px] text-slate-400">{formatDate(m.createdAt)}</span>
-                    </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">{m.reason || '-'}</div>
+                    <span className="font-bold text-white block">{m.type}</span>
+                    <span className="text-[11px] text-slate-400">{m.reason || 'Operation ledger entry'}</span>
+                    <span className="text-[10px] text-slate-500 block">{formatDate(m.createdAt)}</span>
                   </div>
                   <div className="text-right">
                     <span
-                      className={`font-black text-sm ${
-                        m.quantity > 0 && (m.type === 'PURCHASE' || m.type === 'ADJUSTMENT_ADD' || m.type === 'INITIAL')
-                          ? 'text-success'
-                          : 'text-coral'
+                      className={`font-black text-sm block ${
+                        m.quantityChange > 0 ? 'text-emerald-400' : 'text-coral'
                       }`}
                     >
-                      {m.type === 'SALE' || m.type === 'ADJUSTMENT_SUB' || m.type === 'DAMAGE' ? '-' : '+'}
-                      {m.quantity}
+                      {m.quantityChange > 0 ? '+' : ''}
+                      {m.quantityChange}
                     </span>
-                    <div className="text-[10px] text-slate-400">
-                      Balance: {m.newStock}
-                    </div>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      Bal: {m.balanceAfter}
+                    </span>
                   </div>
                 </div>
               ))
