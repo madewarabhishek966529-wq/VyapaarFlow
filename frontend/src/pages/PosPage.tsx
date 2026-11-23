@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
@@ -101,15 +101,17 @@ export const PosPage: React.FC = () => {
   const products: any[] = prodData || [];
   const customers: any[] = custData?.data?.customers || [];
 
-  // Filter products for instant auto-complete
-  const filteredProducts = searchQuery.trim()
-    ? products.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (p.barcode && p.barcode.includes(searchQuery))
-      )
-    : [];
+  // Memoized product filter for zero-lag instant search & barcode lookup
+  const filteredProducts = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.sku.toLowerCase().includes(q) ||
+        (p.barcode && p.barcode.includes(q))
+    );
+  }, [searchQuery, products]);
 
   // Add product to cart
   const addToCart = (product: any, quantity: number = 1) => {
@@ -188,13 +190,23 @@ export const PosPage: React.FC = () => {
     }
   };
 
-  // Financial calculations
-  const subtotal = cart.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
-  const billDiscountAmount = Math.round(subtotal * (billDiscountPercent / 100) * 100) / 100;
-  const taxableTotal = Math.max(0, subtotal - billDiscountAmount);
-  const totalTax = cart.reduce((acc, item) => acc + item.taxAmount, 0);
-  const roundedGrandTotal = Math.round(taxableTotal);
-  const roundOff = Math.round((roundedGrandTotal - taxableTotal) * 100) / 100;
+  // Memoized financial calculations to prevent unnecessary re-computations
+  const { subtotal, billDiscountAmount, taxableTotal, totalTax, roundedGrandTotal, roundOff } = useMemo(() => {
+    const sub = cart.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
+    const disc = Math.round(sub * (billDiscountPercent / 100) * 100) / 100;
+    const taxable = Math.max(0, sub - disc);
+    const tax = cart.reduce((acc, item) => acc + item.taxAmount, 0);
+    const rounded = Math.round(taxable);
+    const rOff = Math.round((rounded - taxable) * 100) / 100;
+    return {
+      subtotal: sub,
+      billDiscountAmount: disc,
+      taxableTotal: taxable,
+      totalTax: tax,
+      roundedGrandTotal: rounded,
+      roundOff: rOff
+    };
+  }, [cart, billDiscountPercent]);
 
   // Tendered cash calculation
   const cashGivenNum = parseFloat(cashTendered) || 0;
