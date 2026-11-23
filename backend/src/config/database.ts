@@ -4,6 +4,10 @@ import { CONFIG } from './constants';
 let memoryServer: any = null;
 
 export const connectDatabase = async (): Promise<string> => {
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection.host || 'connected';
+  }
+
   try {
     // Attempt connecting to configured MONGODB_URI
     mongoose.set('strictQuery', false);
