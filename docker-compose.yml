@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: vyapaarflow-mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: vyapaar_admin
+      MONGO_INITDB_ROOT_PASSWORD: vyapaar_secure_password_2026
+      MONGO_INITDB_DATABASE: vyapaarflow
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', 'db.adminCommand("ping")']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: vyapaarflow-backend
+    restart: always
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      MONGODB_URI: mongodb://vyapaar_admin:vyapaar_secure_password_2026@mongodb:27017/vyapaarflow?authSource=admin
+      JWT_SECRET: vyapaarflow_production_jwt_secret_key_2026
+      JWT_EXPIRES_IN: 7d
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - '5000:5000'
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: vyapaarflow-frontend
+    restart: always
+    ports:
+      - '3000:80'
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:
+    driver: local

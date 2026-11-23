@@ -1,0 +1,9 @@
+packages:
+  - 'shared'
+  - 'backend'
+  - 'frontend'
+
+allowBuilds:
+  core-js: true
+  esbuild: true
+  mongodb-memory-server: true
