@@ -44,7 +44,7 @@ export class AuthController {
           isSuperAdmin: newUser.isSuperAdmin
         },
         CONFIG.JWT_SECRET,
-        { expiresIn: CONFIG.JWT_EXPIRES_IN as any }
+        { algorithm: 'HS256', expiresIn: CONFIG.JWT_EXPIRES_IN as any }
       );
 
       res.status(201).json({
@@ -108,7 +108,7 @@ export class AuthController {
           isSuperAdmin: user.isSuperAdmin
         },
         CONFIG.JWT_SECRET,
-        { expiresIn: CONFIG.JWT_EXPIRES_IN as any }
+        { algorithm: 'HS256', expiresIn: CONFIG.JWT_EXPIRES_IN as any }
       );
 
       res.json({

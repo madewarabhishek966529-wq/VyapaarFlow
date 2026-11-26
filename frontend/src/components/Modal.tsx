@@ -33,22 +33,22 @@ export const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-150">
       <div
-        className={`bg-slate-900/95 backdrop-blur-2xl text-slate-100 rounded-3xl shadow-glass border border-white/15 w-full ${maxWidth} max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 relative`}
+        className={`bg-surface text-content-primary rounded-xl shadow-xl border border-borderline w-full ${maxWidth} max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 relative`}
       >
         {title && (
-          <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-white/[0.03]">
-            <h3 className="font-black text-base text-white tracking-tight">{title}</h3>
+          <div className="px-5 py-4 border-b border-borderline flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
+            <h3 className="font-bold text-base text-[#142D4E] dark:text-white tracking-tight">{title}</h3>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition active:scale-95"
+              className="p-1.5 rounded-lg text-content-secondary hover:text-content-primary hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         )}
-        <div className="p-6 overflow-y-auto flex-1">{children}</div>
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
   );

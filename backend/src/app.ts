@@ -22,9 +22,49 @@ import subscriptionRoutes from './routes/subscriptionRoutes';
 
 const app: Application = express();
 
-// Security & Parsing Middleware
-app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors({ origin: '*', credentials: true }));
+// Security Headers (Vulnerability #27)
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    dnsPrefetchControl: { allow: false },
+    frameguard: { action: 'deny' },
+    hidePoweredBy: true,
+    hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+    noSniff: true,
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    xssFilter: true
+  })
+);
+
+// Strict CORS Whitelist Configuration (Vulnerability #20)
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173'
+].filter(Boolean) as string[];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.includes(origin) ||
+        /^http:\/\/localhost:\d+$/.test(origin) ||
+        /^http:\/\/127\.0\.0\.1:\d+$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      return callback(new Error('Blocked by CORS policy'));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-business-id']
+  })
+);
 
 // Native high-performance response compression middleware (>1KB payloads)
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -54,11 +94,34 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// NoSQL Injection Query & Body Sanitizer Middleware (Vulnerability #2)
+const sanitizeNoSQL = (data: any): any => {
+  if (!data || typeof data !== 'object') return data;
+  if (Array.isArray(data)) {
+    return data.map(sanitizeNoSQL);
+  }
+  for (const key of Object.keys(data)) {
+    if (key.startsWith('$') || key.includes('.')) {
+      delete data[key];
+    } else {
+      data[key] = sanitizeNoSQL(data[key]);
+    }
+  }
+  return data;
+};
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.body) sanitizeNoSQL(req.body);
+  if (req.query) sanitizeNoSQL(req.query);
+  if (req.params) sanitizeNoSQL(req.params);
+  next();
+});
+
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
-// Global API rate limiter
+// Global API rate limiter (Vulnerability #9)
 app.use('/api', apiRateLimiter);
 
 // Health check endpoint
@@ -85,7 +148,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 
-// Centralized error handler
+// Centralized error handler (Vulnerability #11)
 app.use(errorHandler);
 
 export default app;

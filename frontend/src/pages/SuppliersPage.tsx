@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
-import { formatCurrency, formatDate } from '../lib/utils';
+import { formatCurrency } from '../lib/utils';
 import { Modal } from '../components/Modal';
-import { Truck, Plus, Search, Phone, FileText, ShoppingCart } from 'lucide-react';
+import { Truck, Plus, Search, ShoppingCart } from 'lucide-react';
 
 export const SuppliersPage: React.FC = () => {
   const { t } = useLanguage();
@@ -94,37 +94,45 @@ export const SuppliersPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-softgrey-border shadow-sm">
+    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-surface p-6 rounded-xl border border-borderline shadow-card">
         <div>
-          <h1 className="text-xl font-black text-navy flex items-center gap-2">
-            <Truck className="w-5 h-5 text-coral" />
-            <span>{t('nav.suppliers')}</span>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#256D85]/10 text-[#256D85] dark:text-[#368AA5] border border-[#256D85]/20">
+              <Truck className="w-3.5 h-3.5" />
+              Vendor Operations
+            </span>
+          </div>
+          <h1 className="text-2xl font-extrabold text-[#142D4E] dark:text-white tracking-tight">
+            {t('nav.suppliers')}
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-content-secondary mt-1">
             Supplier directory, purchase invoices, and payable balance tracking
           </p>
         </div>
 
+        {/* Primary CTA (Amber) */}
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-1.5 px-4 py-2.5 bg-coral hover:bg-coral-hover text-white text-xs font-bold rounded-xl shadow transition"
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#D97706] hover:bg-[#B45309] text-white text-xs font-bold rounded-lg shadow-sm transition-all active:scale-[0.98]"
         >
           <Plus className="w-4 h-4" />
           <span>+ Add Supplier</span>
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-softgrey-border shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-softgrey-border">
+      {/* Table Container */}
+      <div className="bg-surface rounded-xl border border-borderline shadow-card overflow-hidden">
+        <div className="p-4 border-b border-borderline">
           <div className="relative max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-content-muted absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search suppliers by name or phone..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-pearl border border-softgrey-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-coral"
+              className="w-full pl-9 pr-3 py-2 bg-[#F5F7FA] dark:bg-slate-800 border border-borderline rounded-lg text-xs text-content-primary placeholder-content-muted focus:outline-none focus:ring-2 focus:ring-[#256D85]/30 focus:border-[#256D85]"
             />
           </div>
         </div>
@@ -132,50 +140,50 @@ export const SuppliersPage: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead>
-              <tr className="bg-pearl text-slate-600 font-bold border-b border-softgrey-border">
-                <th className="p-3.5">Supplier Name & Contact</th>
-                <th className="p-3.5">GSTIN</th>
-                <th className="p-3.5 text-right">Total Purchases</th>
-                <th className="p-3.5 text-right">Payable Balance</th>
-                <th className="p-3.5 text-center">Actions</th>
+              <tr className="bg-slate-50 dark:bg-slate-800/50 text-content-secondary font-bold border-b border-borderline">
+                <th className="p-4">Supplier Name & Contact</th>
+                <th className="p-4">GSTIN</th>
+                <th className="p-4 text-right">Total Purchases</th>
+                <th className="p-4 text-right">Payable Balance</th>
+                <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-softgrey-border">
+            <tbody className="divide-y divide-borderline">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-400">Loading suppliers...</td>
+                  <td colSpan={5} className="p-8 text-center text-content-muted">Loading suppliers...</td>
                 </tr>
               ) : suppliers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-400">No suppliers added yet</td>
+                  <td colSpan={5} className="p-8 text-center text-content-muted">No suppliers added yet</td>
                 </tr>
               ) : (
                 suppliers.map((s) => (
-                  <tr key={s._id} className="hover:bg-pearl/50 transition">
-                    <td className="p-3.5">
-                      <div className="font-bold text-navy text-sm">{s.name}</div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
+                  <tr key={s._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                    <td className="p-4">
+                      <div className="font-bold text-content-primary text-sm">{s.name}</div>
+                      <div className="text-[11px] text-content-secondary mt-0.5">
                         {s.contactPerson ? `${s.contactPerson} • ` : ''}Ph: {s.mobile}
                       </div>
                     </td>
-                    <td className="p-3.5 font-mono text-slate-600 font-semibold">{s.gstin || '-'}</td>
-                    <td className="p-3.5 text-right font-semibold text-slate-800">
+                    <td className="p-4 font-mono text-content-secondary font-semibold">{s.gstin || '-'}</td>
+                    <td className="p-4 text-right font-semibold text-content-primary">
                       {formatCurrency(s.totalPurchases)}
                     </td>
-                    <td className="p-3.5 text-right font-black text-sm">
-                      <span className={s.outstandingBalance > 0 ? 'text-coral' : 'text-slate-400'}>
+                    <td className="p-4 text-right font-extrabold text-sm">
+                      <span className={s.outstandingBalance > 0 ? 'text-[#D97706]' : 'text-content-muted'}>
                         {formatCurrency(s.outstandingBalance)}
                       </span>
                     </td>
-                    <td className="p-3.5 text-center">
+                    <td className="p-4 text-center">
                       <button
                         onClick={() => {
                           setSelectedSupplier(s);
                           setIsPurchaseModalOpen(true);
                         }}
-                        className="px-3 py-1.5 bg-navy hover:bg-navy-light text-white font-bold rounded-lg text-xs shadow transition flex items-center gap-1 mx-auto"
+                        className="px-3 py-1.5 bg-[#256D85] hover:bg-[#1E576B] text-white font-bold rounded-lg text-xs shadow-sm transition-colors flex items-center gap-1 mx-auto"
                       >
-                        <ShoppingCart className="w-3.5 h-3.5 text-coral" />
+                        <ShoppingCart className="w-3.5 h-3.5 text-[#D97706]" />
                         <span>Record Purchase</span>
                       </button>
                     </td>
@@ -197,61 +205,61 @@ export const SuppliersPage: React.FC = () => {
           className="space-y-4 text-xs"
         >
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Company / Supplier Name *</label>
+            <label className="font-bold text-content-secondary block mb-1">Company / Supplier Name *</label>
             <input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl"
+              className="vf-input"
               placeholder="e.g. Pune Metro FMCG Distributors"
             />
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Contact Person</label>
+            <label className="font-bold text-content-secondary block mb-1">Contact Person</label>
             <input
               type="text"
               value={formData.contactPerson}
               onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl"
+              className="vf-input"
             />
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Mobile Number *</label>
+            <label className="font-bold text-content-secondary block mb-1">Mobile Number *</label>
             <input
               type="tel"
               required
               pattern="[6-9][0-9]{9}"
               value={formData.mobile}
               onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-mono"
+              className="vf-input font-mono"
             />
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">GSTIN</label>
+            <label className="font-bold text-content-secondary block mb-1">GSTIN</label>
             <input
               type="text"
               value={formData.gstin}
               onChange={(e) => setFormData({ ...formData, gstin: e.target.value })}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-mono uppercase"
+              className="vf-input font-mono uppercase"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-softgrey-border">
+          <div className="flex justify-end gap-2 pt-3 border-t border-borderline">
             <button
               type="button"
               onClick={() => setIsAddModalOpen(false)}
-              className="px-4 py-2 bg-softgrey hover:bg-softgrey-border text-navy font-semibold rounded-xl"
+              className="vf-btn-outline"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={addSupplierMutation.isPending}
-              className="px-5 py-2 bg-coral hover:bg-coral-hover text-white font-bold rounded-xl shadow"
+              className="vf-btn-primary"
             >
               Save Supplier
             </button>
@@ -259,42 +267,41 @@ export const SuppliersPage: React.FC = () => {
         </form>
       </Modal>
 
-      {/* Record Purchase Stock-In Modal */}
+      {/* Record Purchase Modal */}
       <Modal
         isOpen={isPurchaseModalOpen}
         onClose={() => setIsPurchaseModalOpen(false)}
-        title={`Record Purchase from ${selectedSupplier?.name}`}
-        maxWidth="max-w-md"
+        title={`Record Purchase from: ${selectedSupplier?.name}`}
+        maxWidth="max-w-lg"
       >
         <form onSubmit={handlePurchaseSubmit} className="space-y-4 text-xs">
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Purchase Invoice Number *</label>
+            <label className="font-bold text-content-secondary block mb-1">Supplier Invoice #</label>
             <input
               type="text"
-              required
               value={purchaseInvoiceNo}
               onChange={(e) => setPurchaseInvoiceNo(e.target.value)}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-mono"
-              placeholder="e.g. INV-SUP-8902"
+              placeholder="e.g. INV-99881"
+              className="vf-input"
             />
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Select Product to Stock-In *</label>
+            <label className="font-bold text-content-secondary block mb-1">Product Purchased *</label>
             <select
               required
               value={selectedProductId}
               onChange={(e) => {
                 setSelectedProductId(e.target.value);
                 const p = products.find((x) => x._id === e.target.value);
-                if (p) setPurchasePrice(p.purchasePrice);
+                if (p) setPurchasePrice(p.purchasePrice || 0);
               }}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-semibold"
+              className="vf-input"
             >
-              <option value="">-- Choose Product --</option>
+              <option value="">-- Select Product --</option>
               {products.map((p) => (
                 <option key={p._id} value={p._id}>
-                  {p.name} ({p.sku})
+                  {p.name} ({p.sku}) • Current Stock: {p.currentStock}
                 </option>
               ))}
             </select>
@@ -302,57 +309,61 @@ export const SuppliersPage: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Quantity *</label>
+              <label className="font-bold text-content-secondary block mb-1">Quantity Received</label>
               <input
                 type="number"
                 min="1"
                 required
                 value={purchaseQty}
-                onChange={(e) => setPurchaseQty(parseFloat(e.target.value) || 1)}
-                className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-bold"
+                onChange={(e) => setPurchaseQty(parseFloat(e.target.value) || 0)}
+                className="vf-input"
               />
             </div>
-
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Purchase Cost (₹) *</label>
+              <label className="font-bold text-content-secondary block mb-1">Purchase Rate (₹)</label>
               <input
                 type="number"
                 min="0"
-                step="0.01"
+                step="any"
                 required
                 value={purchasePrice}
                 onChange={(e) => setPurchasePrice(parseFloat(e.target.value) || 0)}
-                className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-bold"
+                className="vf-input"
               />
             </div>
           </div>
 
+          <div className="p-3 bg-[#F5F7FA] dark:bg-slate-800 rounded-lg border border-borderline flex justify-between font-bold text-content-primary">
+            <span>Total Purchase Amount:</span>
+            <span className="text-[#142D4E] dark:text-white">{formatCurrency(purchaseQty * purchasePrice)}</span>
+          </div>
+
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Amount Paid to Supplier Now (₹)</label>
+            <label className="font-bold text-content-secondary block mb-1">Amount Paid to Supplier Now (₹)</label>
             <input
               type="number"
               min="0"
+              step="any"
               value={amountPaid}
               onChange={(e) => setAmountPaid(parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-bold text-success"
-              placeholder="0 (Full Udhaar)"
+              className="vf-input"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-softgrey-border">
+          <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
               onClick={() => setIsPurchaseModalOpen(false)}
-              className="px-4 py-2 bg-softgrey hover:bg-softgrey-border text-navy font-semibold rounded-xl"
+              className="vf-btn-outline"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={recordPurchaseMutation.isPending}
-              className="px-5 py-2 bg-coral hover:bg-coral-hover text-white font-bold rounded-xl shadow"
+              className="vf-btn-primary"
             >
-              Record & Add Stock
+              Confirm Stock-In
             </button>
           </div>
         </form>

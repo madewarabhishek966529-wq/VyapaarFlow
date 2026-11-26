@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -7,107 +8,98 @@ export default {
   theme: {
     extend: {
       colors: {
-        obsidian: {
-          DEFAULT: '#0B0F19',
-          900: '#070A12',
-          800: '#0B0F19',
-          700: '#111827',
-          600: '#1F2937'
+        // Official Brand Color System (Section 2)
+        brand: {
+          navy: '#142D4E',        // Deep Navy (Brand identity, sidebar, headings)
+          'navy-dark': '#0E2139',
+          'navy-light': '#1E3E6B',
+          ocean: '#256D85',       // Ocean Blue (Dominant Accent: links, nav selection, charts)
+          'ocean-dark': '#1C5467',
+          'ocean-light': '#368AA5',
+          'ocean-soft': '#E6F0F4',
+          amber: '#D97706',       // Amber (Primary CTA buttons, badges, key highlights)
+          'amber-hover': '#B45309',
+          'amber-light': '#F0A43A',
+          'amber-soft': '#FEF3C7',
         },
+        // Theme-responsive dynamic tokens
+        surface: {
+          DEFAULT: 'var(--color-surface)',
+          subtle: 'var(--color-surface-subtle)',
+          dark: '#1C2C40',
+          light: '#FFFFFF'
+        },
+        app: {
+          DEFAULT: 'var(--color-background)',
+          dark: '#101B2B',
+          light: '#F5F7FA'
+        },
+        content: {
+          primary: 'var(--color-text)',
+          secondary: 'var(--color-text-secondary)',
+          muted: 'var(--color-text-muted)'
+        },
+        borderline: 'var(--color-border)',
+        
+        // Semantic status colors
+        status: {
+          success: '#16A34A',
+          'success-soft': '#DCFCE7',
+          warning: '#D97706',
+          'warning-soft': '#FEF3C7',
+          danger: '#DC4C4C',
+          'danger-soft': '#FEE2E2',
+          info: '#3685D6',
+          'info-soft': '#E0F2FE'
+        },
+
+        // Backward compatibility mappings (safely aligned with official palette)
         navy: {
-          DEFAULT: '#14213D',
-          dark: '#0A1120',
-          light: '#1E2F56',
-          muted: '#2A3C6B'
-        },
-        pearl: {
-          DEFAULT: '#F8F9FC',
-          light: '#FFFFFF',
-          dark: '#F1F3F9'
+          DEFAULT: '#142D4E',
+          dark: '#0E2139',
+          light: '#1E3E6B'
         },
         coral: {
-          DEFAULT: '#FF6B5F',
-          hover: '#FF5445',
-          light: '#FFE4E2',
-          glow: 'rgba(255, 107, 95, 0.4)'
+          DEFAULT: '#D97706', // Aligned with Amber
+          hover: '#B45309',
+          light: '#FEF3C7',
+          glow: 'rgba(217, 119, 6, 0.25)'
         },
-        aurora: {
-          purple: '#8B5CF6',
-          violet: '#7C3AED',
-          indigo: '#6366F1',
-          pink: '#EC4899',
-          cyan: '#06B6D4',
-          coral: '#FF6B5F',
-          amber: '#F59E0B',
-          emerald: '#10B981'
+        pearl: {
+          DEFAULT: '#F5F7FA',
+          light: '#FFFFFF',
+          dark: '#E5EBF2'
         },
         softgrey: {
-          DEFAULT: '#E9EDF3',
-          border: '#D8DEE9',
-          light: '#F4F6F9'
+          DEFAULT: '#E5EBF2',
+          border: '#CBD5E1',
+          light: '#F8FAFC'
         },
-        success: {
-          DEFAULT: '#16A36A',
-          light: '#E2F7ED',
-          dark: '#118153'
-        },
-        warning: {
-          DEFAULT: '#E9A23B',
-          light: '#FEF6E9',
-          dark: '#C88526'
+        aurora: {
+          purple: '#256D85', // Replaced with Ocean Blue
+          violet: '#1C5467',
+          indigo: '#142D4E',
+          cyan: '#368AA5',
+          coral: '#D97706',
+          amber: '#D97706',
+          emerald: '#16A34A'
         }
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        heading: ['Manrope', 'Inter', 'system-ui', 'sans-serif'],
         hindi: ['Noto Sans Devanagari', 'Inter', 'sans-serif']
       },
       boxShadow: {
-        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
-        'glass-sm': '0 4px 16px 0 rgba(0, 0, 0, 0.25)',
-        'glow-purple': '0 0 25px -3px rgba(139, 92, 246, 0.45)',
-        'glow-coral': '0 0 25px -3px rgba(255, 107, 95, 0.45)',
-        'glow-cyan': '0 0 25px -3px rgba(6, 182, 212, 0.45)',
-        'glow-emerald': '0 0 25px -3px rgba(16, 185, 129, 0.45)',
-        'glow-indigo': '0 0 25px -3px rgba(99, 102, 241, 0.45)',
-        'inner-light': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.12)',
-        'inner-light-subtle': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.06)'
-      },
-      animation: {
-        'aurora-1': 'auroraMove1 18s ease-in-out infinite alternate',
-        'aurora-2': 'auroraMove2 22s ease-in-out infinite alternate',
-        'aurora-3': 'auroraMove3 15s ease-in-out infinite alternate',
-        'float': 'float 6s ease-in-out infinite',
-        'shimmer': 'shimmer 2.5s infinite linear',
-        'pulse-glow': 'pulseGlow 3s ease-in-out infinite'
-      },
-      keyframes: {
-        auroraMove1: {
-          '0%': { transform: 'translate(0px, 0px) scale(1)' },
-          '50%': { transform: 'translate(60px, -40px) scale(1.15)' },
-          '100%': { transform: 'translate(-30px, 50px) scale(0.95)' }
-        },
-        auroraMove2: {
-          '0%': { transform: 'translate(0px, 0px) scale(1)' },
-          '50%': { transform: 'translate(-70px, 30px) scale(1.2)' },
-          '100%': { transform: 'translate(40px, -60px) scale(0.9)' }
-        },
-        auroraMove3: {
-          '0%': { transform: 'translate(0px, 0px) scale(0.9)' },
-          '50%': { transform: 'translate(40px, 40px) scale(1.1)' },
-          '100%': { transform: 'translate(-50px, -20px) scale(1.05)' }
-        },
-        float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-6px)' }
-        },
-        shimmer: {
-          '0%': { transform: 'translateX(-100%)' },
-          '100%': { transform: 'translateX(200%)' }
-        },
-        pulseGlow: {
-          '0%, 100%': { opacity: '0.4' },
-          '50%': { opacity: '0.8' }
-        }
+        'card': '0 1px 3px 0 rgba(20, 45, 78, 0.05), 0 1px 2px -1px rgba(20, 45, 78, 0.05)',
+        'card-hover': '0 4px 6px -1px rgba(20, 45, 78, 0.07), 0 2px 4px -2px rgba(20, 45, 78, 0.04)',
+        'card-elevated': '0 10px 15px -3px rgba(20, 45, 78, 0.08), 0 4px 6px -4px rgba(20, 45, 78, 0.04)',
+        'btn-amber': '0 2px 4px 0 rgba(217, 119, 6, 0.25)',
+        'btn-ocean': '0 2px 4px 0 rgba(37, 109, 133, 0.25)',
+        'glass': '0 4px 12px 0 rgba(20, 45, 78, 0.08)',
+        'glow-purple': '0 0 15px 0 rgba(37, 109, 133, 0.25)',
+        'glow-coral': '0 0 15px 0 rgba(217, 119, 6, 0.25)',
+        'glow-emerald': '0 0 15px 0 rgba(22, 163, 74, 0.25)'
       }
     },
   },

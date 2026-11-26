@@ -13,16 +13,15 @@ import {
   Receipt,
   ArrowUpRight,
   ShoppingCart,
-  IndianRupee,
-  Sparkles,
   Zap,
-  QrCode,
   Printer,
+  QrCode,
   Smartphone,
   ShieldCheck,
   CheckCircle2,
   Users,
-  ChevronRight
+  ChevronRight,
+  PackageCheck
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -42,7 +41,7 @@ export const DashboardPage: React.FC = () => {
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard-overview'],
     queryFn: () => api.get('/reports/dashboard'),
-    refetchInterval: 15000 // Real-time 15s refresh
+    refetchInterval: 15000
   });
 
   const metrics = data?.data || {};
@@ -53,7 +52,6 @@ export const DashboardPage: React.FC = () => {
     bills: item.bills || 0
   }));
 
-  // Fallback demo points if database has only today's data so the sparkline glows beautifully
   const displayChartData = chartData.length > 1 ? chartData : [
     { date: '11-18', sales: 4200, bills: 12 },
     { date: '11-19', sales: 6850, bills: 18 },
@@ -63,7 +61,8 @@ export const DashboardPage: React.FC = () => {
     { date: '11-23', sales: metrics.todaySales || 14500, bills: metrics.todayBillsCount || 34 }
   ];
 
-  const pieColors = ['#8B5CF6', '#FF6B5F', '#10B981', '#06B6D4', '#F59E0B'];
+  // Official Chart Palette (Section 9): Ocean Blue, Amber, Deep Navy, Success Green, Information Blue
+  const pieColors = ['#256D85', '#D97706', '#142D4E', '#16A34A', '#3685D6'];
   const paymentPieData = (metrics.paymentBreakdown || []).map((item: any) => ({
     name: item._id,
     value: item.totalAmount
@@ -73,8 +72,8 @@ export const DashboardPage: React.FC = () => {
     return (
       <div className="p-8 flex items-center justify-center min-h-[500px]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 border-4 border-aurora-purple border-t-transparent rounded-full animate-spin shadow-glow-purple"></div>
-          <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">
+          <div className="w-10 h-10 border-4 border-[#256D85] border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-xs font-semibold text-content-secondary uppercase tracking-wider">
             Loading Real-time Telemetry...
           </span>
         </div>
@@ -83,408 +82,296 @@ export const DashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto relative z-10">
+    <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Top Header / Store Status & Quick Actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="bento-tag bg-aurora-purple/15 text-aurora-purple border-aurora-purple/30">
-              <span className="w-1.5 h-1.5 rounded-full bg-aurora-purple animate-ping"></span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#256D85]/10 text-[#256D85] dark:text-[#368AA5] border border-[#256D85]/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#256D85] animate-pulse"></span>
               Live Telemetry
             </span>
-            <span className="bento-tag bg-emerald-500/15 text-emerald-400 border-emerald-500/30">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
               Store Open
             </span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white flex items-center gap-2.5">
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#142D4E] dark:text-white flex items-center gap-2.5">
             <span>{t('dashboard.title')}</span>
-            <span className="text-slate-400 font-normal text-sm md:text-base hidden sm:inline">
+            <span className="text-content-secondary font-normal text-sm md:text-base hidden sm:inline">
               • Overview
             </span>
           </h1>
         </div>
 
+        {/* Quick Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5">
+          {/* Primary CTA (Amber) */}
           <NavLink
             to="/pos"
-            className="group relative flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-coral via-rose-500 to-aurora-purple text-white text-xs font-bold rounded-2xl shadow-glow-coral hover:shadow-2xl transition-all transform hover:-translate-y-0.5 active:scale-95 overflow-hidden"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#D97706] hover:bg-[#B45309] text-white text-xs font-bold rounded-lg shadow-sm transition-all duration-150 active:scale-[0.98]"
           >
-            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
             <ShoppingCart className="w-4 h-4" />
             <span>{t('dashboard.newBill')}</span>
-            <span className="bg-black/25 text-[10px] px-1.5 py-0.5 rounded font-mono">F2</span>
+            <span className="bg-black/20 text-[10px] px-1.5 py-0.5 rounded font-mono font-normal">F2</span>
           </NavLink>
 
           <NavLink
             to="/inventory"
-            className="flex items-center gap-2 px-3.5 py-2.5 bg-white/5 hover:bg-white/10 text-white text-xs font-semibold rounded-2xl border border-white/10 hover:border-white/20 transition active:scale-95"
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 text-content-primary text-xs font-semibold rounded-lg border border-borderline shadow-sm transition-colors"
           >
-            <PlusCircle className="w-3.5 h-3.5 text-aurora-purple" />
+            <PlusCircle className="w-3.5 h-3.5 text-[#256D85]" />
             <span>{t('dashboard.addProduct')}</span>
           </NavLink>
 
           <NavLink
             to="/udhaar"
-            className="flex items-center gap-2 px-3.5 py-2.5 bg-white/5 hover:bg-white/10 text-white text-xs font-semibold rounded-2xl border border-white/10 hover:border-white/20 transition active:scale-95"
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-[#256D85] hover:bg-[#1E576B] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
           >
-            <CreditCard className="w-3.5 h-3.5 text-coral" />
+            <CreditCard className="w-3.5 h-3.5" />
             <span>{t('dashboard.recordPayment')}</span>
           </NavLink>
         </div>
       </div>
 
       {/* ========================================================= */}
-      {/* BENTO GRID: ROW 1 (Hero Analytics Card + Fast POS Cockpit) */}
+      {/* 4 SUMMARY STATISTIC CARDS (White Cards, Deep Navy Headings)*/}
+      {/* ========================================================= */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Today's Sales */}
+        <div className="bg-surface border border-borderline rounded-xl p-5 shadow-card hover:shadow-card-hover transition-shadow">
+          <div className="flex items-center justify-between text-content-secondary mb-2">
+            <span className="text-xs font-bold uppercase tracking-wider">Today's Revenue</span>
+            <div className="w-8 h-8 rounded-lg bg-[#256D85]/10 flex items-center justify-center text-[#256D85]">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-extrabold text-[#142D4E] dark:text-white">
+            {formatCurrency(metrics.todaySales || 0)}
+          </div>
+          <div className="flex items-center justify-between text-xs text-content-secondary mt-2 pt-2 border-t border-borderline">
+            <span>{metrics.todayBillsCount || 0} bills generated</span>
+            <span className="text-emerald-600 font-bold">+18.4%</span>
+          </div>
+        </div>
+
+        {/* Monthly Sales */}
+        <div className="bg-surface border border-borderline rounded-xl p-5 shadow-card hover:shadow-card-hover transition-shadow">
+          <div className="flex items-center justify-between text-content-secondary mb-2">
+            <span className="text-xs font-bold uppercase tracking-wider">Monthly Sales</span>
+            <div className="w-8 h-8 rounded-lg bg-[#142D4E]/10 flex items-center justify-center text-[#142D4E] dark:text-slate-300">
+              <Receipt className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-extrabold text-[#142D4E] dark:text-white">
+            {formatCurrency(metrics.monthlySales || 0)}
+          </div>
+          <div className="flex items-center justify-between text-xs text-content-secondary mt-2 pt-2 border-t border-borderline">
+            <span>Month-to-Date</span>
+            <span className="text-[#256D85] font-semibold">Active</span>
+          </div>
+        </div>
+
+        {/* Market Outstanding Udhaar */}
+        <div className="bg-surface border border-borderline rounded-xl p-5 shadow-card hover:shadow-card-hover transition-shadow">
+          <div className="flex items-center justify-between text-content-secondary mb-2">
+            <span className="text-xs font-bold uppercase tracking-wider">Outstanding Udhaar</span>
+            <div className="w-8 h-8 rounded-lg bg-[#D97706]/10 flex items-center justify-center text-[#D97706]">
+              <CreditCard className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-extrabold text-[#D97706]">
+            {formatCurrency(metrics.outstandingCredit || 0)}
+          </div>
+          <div className="flex items-center justify-between text-xs text-content-secondary mt-2 pt-2 border-t border-borderline">
+            <span>{metrics.totalCustomers || 0} Registered Buyers</span>
+            <NavLink to="/udhaar" className="text-[#256D85] hover:underline font-semibold flex items-center">
+              Collect <ChevronRight className="w-3 h-3" />
+            </NavLink>
+          </div>
+        </div>
+
+        {/* Total Inventory & Stock Health */}
+        <div className="bg-surface border border-borderline rounded-xl p-5 shadow-card hover:shadow-card-hover transition-shadow">
+          <div className="flex items-center justify-between text-content-secondary mb-2">
+            <span className="text-xs font-bold uppercase tracking-wider">Inventory Value</span>
+            <div className="w-8 h-8 rounded-lg bg-[#16A34A]/10 flex items-center justify-center text-[#16A34A]">
+              <Boxes className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-extrabold text-[#142D4E] dark:text-white">
+            {formatCurrency(metrics.totalInventoryValue || 0)}
+          </div>
+          <div className="flex items-center justify-between text-xs text-content-secondary mt-2 pt-2 border-t border-borderline">
+            <span>{metrics.totalProducts || 0} Products</span>
+            <span className={`font-bold ${metrics.lowStockCount > 0 ? 'text-[#DC4C4C]' : 'text-emerald-600'}`}>
+              {metrics.lowStockCount || 0} low stock
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================= */}
+      {/* ROW 2: Revenue Analytics Area Chart + Fast POS Cockpit   */}
       {/* ========================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Bento Hero Card: Access powerful data + Glowing Line Chart (8 cols) */}
-        <div className="lg:col-span-8 glass-card glass-card-hover p-6 flex flex-col justify-between relative overflow-hidden group">
-          {/* Subtle background glow orb */}
-          <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-aurora-purple/20 blur-3xl group-hover:bg-aurora-purple/30 transition-all pointer-events-none" />
-          <div className="absolute top-1/2 right-0 w-48 h-48 rounded-full bg-coral/10 blur-3xl pointer-events-none" />
-
-          {/* Top category chip */}
-          <div className="flex items-center justify-between mb-3 relative z-10">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center text-aurora-purple">
-                <TrendingUp className="w-4 h-4" />
-              </div>
-              <span className="text-[11px] font-bold text-slate-400 tracking-wider uppercase">
-                REVENUE INTELLIGENCE & TELEMETRY
+        {/* Sales Overview Area Chart (8 cols) */}
+        <div className="lg:col-span-8 bg-surface border border-borderline rounded-xl p-6 shadow-card flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <span className="text-xs font-bold text-[#256D85] uppercase tracking-wider block">
+                Sales Overview & Trends
               </span>
+              <h2 className="text-lg font-bold text-[#142D4E] dark:text-white">
+                Daily Sales Revenue (Last 7 Days)
+              </h2>
             </div>
-            <span className="text-[11px] text-slate-400 font-mono">Last 7 Days</span>
+            <span className="text-xs text-content-secondary font-medium">Daily Totals</span>
           </div>
 
-          {/* Heading */}
-          <div className="mb-4 relative z-10">
-            <h2 className="text-xl md:text-2xl font-black text-white tracking-tight leading-tight">
-              Access real-time data to help you boost your retail profits
-            </h2>
-          </div>
-
-          {/* Large Stat with Glowing Chip */}
-          <div className="flex flex-wrap items-baseline gap-3 mb-4 relative z-10">
-            <span className="text-3xl md:text-4xl font-black text-white tracking-tight">
-              {formatCurrency(metrics.todaySales || 0)}
-            </span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-glow-emerald">
-              <TrendingUp className="w-3 h-3" />
-              <span>+18.4% today</span>
-            </span>
-            <span className="text-xs text-slate-400">
-              ({metrics.todayBillsCount || 0} customer bills generated)
-            </span>
-          </div>
-
-          {/* Glowing Area / Sparkline Chart */}
-          <div className="h-44 w-full relative z-10">
+          {/* Area Chart with Ocean Blue fill */}
+          <div className="h-56 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={displayChartData}>
                 <defs>
-                  <linearGradient id="auroraSalesGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.4} />
-                    <stop offset="60%" stopColor="#EC4899" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#6366F1" stopOpacity={0.0} />
+                  <linearGradient id="oceanSalesGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#256D85" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#256D85" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <XAxis
                   dataKey="date"
-                  stroke="#64748B"
+                  stroke="#94A3B8"
                   fontSize={11}
                   tickLine={false}
-                  axisLine={{ stroke: 'rgba(255, 255, 255, 0.1)' }}
+                  axisLine={{ stroke: '#E5EBF2' }}
                 />
                 <YAxis
-                  stroke="#64748B"
+                  stroke="#94A3B8"
                   fontSize={11}
                   tickLine={false}
-                  axisLine={{ stroke: 'rgba(255, 255, 255, 0.1)' }}
+                  axisLine={{ stroke: '#E5EBF2' }}
                   tickFormatter={(val) => `₹${val}`}
                 />
                 <Tooltip
-                  formatter={(val: any) => [`₹${val}`, 'Daily Sales']}
+                  formatter={(val: any) => [`₹${val}`, 'Revenue']}
                   contentStyle={{
-                    backgroundColor: '#0F172A',
-                    color: '#F8F9FC',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.5)',
+                    backgroundColor: '#FFFFFF',
+                    color: '#253449',
+                    borderRadius: '8px',
+                    border: '1px solid #E5EBF2',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                     fontSize: '12px'
                   }}
                 />
                 <Area
                   type="monotone"
                   dataKey="sales"
-                  stroke="#8B5CF6"
-                  strokeWidth={3}
+                  stroke="#256D85"
+                  strokeWidth={2.5}
                   fillOpacity={1}
-                  fill="url(#auroraSalesGrad)"
+                  fill="url"
+                  fillRule="evenodd"
                 />
               </AreaChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Bottom Micro Metrics Row */}
-          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-white/10 mt-2 relative z-10">
+          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-borderline mt-3">
             <div>
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">
+              <span className="text-[11px] text-content-secondary uppercase font-bold block">
                 Estimated Gross Profit
               </span>
-              <span className="text-sm md:text-base font-black text-emerald-400">
+              <span className="text-base font-extrabold text-emerald-600">
                 {formatCurrency(metrics.estimatedGrossProfit || 0)}
               </span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">
+              <span className="text-[11px] text-content-secondary uppercase font-bold block">
                 Estimated Net Profit
               </span>
-              <span className="text-sm md:text-base font-black text-white">
+              <span className="text-base font-extrabold text-[#142D4E] dark:text-white">
                 {formatCurrency(metrics.estimatedNetProfit || 0)}
               </span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">
-                Month-to-Date
+              <span className="text-[11px] text-content-secondary uppercase font-bold block">
+                Today's Expenses
               </span>
-              <span className="text-sm md:text-base font-black text-coral">
-                {formatCurrency(metrics.monthlySales || 0)}
+              <span className="text-base font-extrabold text-[#DC4C4C]">
+                {formatCurrency(metrics.todayExpenses || 0)}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Bento Card 2: Fast Billing & POS Cockpit (4 cols) */}
-        <div className="lg:col-span-4 glass-card glass-card-hover p-6 flex flex-col justify-between relative overflow-hidden group">
-          <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-coral/20 blur-3xl pointer-events-none" />
-
-          {/* Top Badge */}
-          <div className="flex items-center justify-between mb-3 relative z-10">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center text-coral">
-                <Zap className="w-4 h-4" />
-              </div>
-              <span className="text-[11px] font-bold text-slate-400 tracking-wider uppercase">
-                FAST POS BILLING
+        {/* Fast POS Terminal Cockpit (4 cols) */}
+        <div className="lg:col-span-4 bg-surface border border-borderline rounded-xl p-6 shadow-card flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold text-[#D97706] uppercase tracking-wider">
+                Fast POS Counter
+              </span>
+              <span className="text-[11px] bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 px-2 py-0.5 rounded font-bold">
+                Online
               </span>
             </div>
-            <span className="text-[10px] bg-coral/20 text-coral border border-coral/30 px-2 py-0.5 rounded-full font-bold">
-              Instant
-            </span>
-          </div>
-
-          {/* Headline */}
-          <div className="mb-4 relative z-10">
-            <h2 className="text-lg md:text-xl font-black text-white tracking-tight leading-snug">
-              Rapid barcode billing with dynamic UPI QR & thermal receipts
+            <h2 className="text-lg font-bold text-[#142D4E] dark:text-white">
+              Billing & Invoices
             </h2>
-            <p className="text-xs text-slate-400 mt-1">
-              Optimized for fast Kirana counter lines with keyboard hotkeys.
+            <p className="text-xs text-content-secondary mt-1">
+              Rapid barcode scanning, instant GST calculation, and WhatsApp receipt sharing.
             </p>
-          </div>
 
-          {/* Interactive Chat/Status Style Pill (matching user's reference image!) */}
-          <div className="p-3.5 rounded-2xl bg-black/40 border border-white/10 backdrop-blur-md mb-4 flex items-center justify-between gap-3 relative z-10 group-hover:border-white/20 transition">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-aurora-purple to-coral flex items-center justify-center font-bold text-xs text-white shadow-glow-purple">
-                <Sparkles className="w-4 h-4" />
+            <div className="mt-4 p-3.5 rounded-lg bg-[#F5F7FA] dark:bg-[#1C2C40] border border-borderline flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-md bg-[#256D85] text-white flex items-center justify-center font-bold">
+                  <Zap className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-content-primary">Scanner & Printer Ready</div>
+                  <div className="text-[11px] text-content-secondary">Keyboard hotkeys active</div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs font-bold text-white">Scanner Active</div>
-                <div className="text-[10px] text-slate-400">Camera & Laser Ready</div>
-              </div>
-            </div>
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-glow-emerald animate-pulse"></span>
-          </div>
-
-          {/* Big Launch Button */}
-          <NavLink
-            to="/pos"
-            className="w-full py-3 px-4 bg-gradient-to-r from-coral to-aurora-purple hover:opacity-95 text-white font-bold rounded-2xl shadow-glow-coral flex items-center justify-center gap-2 text-xs transition active:scale-95 relative z-10"
-          >
-            <ShoppingCart className="w-4 h-4" />
-            <span>Launch POS Terminal</span>
-            <ArrowUpRight className="w-4 h-4 ml-auto" />
-          </NavLink>
-
-          {/* Hotkeys footer */}
-          <div className="flex items-center justify-between text-[10px] text-slate-400 pt-3 border-t border-white/10 mt-3 relative z-10 font-mono">
-            <span>F2: New Bill</span>
-            <span>F4: Find Item</span>
-            <span>F8: Pay</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================================= */}
-      {/* BENTO GRID: ROW 2 (Hardware Ecosystem Dock + Udhaar Ledger Card) */}
-      {/* ========================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Bento Card 3: Works with your favorite tools / Retail Hardware Dock (4 cols) */}
-        <div className="lg:col-span-5 glass-card glass-card-hover p-6 flex flex-col justify-between relative overflow-hidden group">
-          <div className="absolute -bottom-10 -left-10 w-44 h-44 rounded-full bg-aurora-cyan/15 blur-3xl pointer-events-none" />
-
-          {/* Top Badge */}
-          <div className="flex items-center justify-between mb-3 relative z-10">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center text-aurora-cyan">
-                <Boxes className="w-4 h-4" />
-              </div>
-              <span className="text-[11px] font-bold text-slate-400 tracking-wider uppercase">
-                INTEGRATED RETAIL DOCK
-              </span>
-            </div>
-            <span className="text-[10px] bg-aurora-cyan/20 text-aurora-cyan border border-aurora-cyan/30 px-2 py-0.5 rounded-full font-bold">
-              Plug & Play
-            </span>
-          </div>
-
-          {/* Headline */}
-          <div className="mb-4 relative z-10">
-            <h2 className="text-lg md:text-xl font-black text-white tracking-tight">
-              Works seamlessly with all your retail tools
-            </h2>
-            <p className="text-xs text-slate-400 mt-1">
-              Supports POS thermal printers, barcode guns, UPI soundboxes, and WhatsApp.
-            </p>
-          </div>
-
-          {/* Tool Icon Dock (Inspired directly by the reference image's app dock!) */}
-          <div className="grid grid-cols-4 gap-3 my-2 relative z-10">
-            <div className="p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 flex flex-col items-center justify-center gap-1.5 transition transform hover:-translate-y-1 group/tool">
-              <Printer className="w-5 h-5 text-aurora-purple group-hover/tool:scale-110 transition" />
-              <span className="text-[9px] font-bold text-slate-300">Thermal</span>
-            </div>
-            <div className="p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 flex flex-col items-center justify-center gap-1.5 transition transform hover:-translate-y-1 group/tool">
-              <QrCode className="w-5 h-5 text-coral group-hover/tool:scale-110 transition" />
-              <span className="text-[9px] font-bold text-slate-300">UPI QR</span>
-            </div>
-            <div className="p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 flex flex-col items-center justify-center gap-1.5 transition transform hover:-translate-y-1 group/tool">
-              <Smartphone className="w-5 h-5 text-emerald-400 group-hover/tool:scale-110 transition" />
-              <span className="text-[9px] font-bold text-slate-300">WhatsApp</span>
-            </div>
-            <div className="p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 flex flex-col items-center justify-center gap-1.5 transition transform hover:-translate-y-1 group/tool">
-              <ShieldCheck className="w-5 h-5 text-aurora-cyan group-hover/tool:scale-110 transition" />
-              <span className="text-[9px] font-bold text-slate-300">Offline PWA</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
             </div>
           </div>
 
-          <div className="pt-3 border-t border-white/10 mt-2 text-[11px] text-slate-400 flex items-center justify-between relative z-10">
-            <span>IndexedDB Local Storage</span>
-            <span className="text-emerald-400 font-bold flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Auto-Sync On
-            </span>
-          </div>
-        </div>
-
-        {/* Bento Card 4: Udhaar Recovery Engine & Customer Credit (7 cols) */}
-        <div className="lg:col-span-7 glass-card glass-card-hover p-6 flex flex-col justify-between relative overflow-hidden group">
-          <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-warning/15 blur-3xl pointer-events-none" />
-
-          {/* Top Badge */}
-          <div className="flex items-center justify-between mb-3 relative z-10">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center text-warning">
-                <CreditCard className="w-4 h-4" />
-              </div>
-              <span className="text-[11px] font-bold text-slate-400 tracking-wider uppercase">
-                CUSTOMER CREDIT & UDHAAR KHATA
-              </span>
-            </div>
+          <div className="mt-5 space-y-3">
             <NavLink
-              to="/udhaar"
-              className="text-xs text-warning hover:underline font-semibold flex items-center gap-1"
+              to="/pos"
+              className="w-full py-3 px-4 bg-[#D97706] hover:bg-[#B45309] text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 text-xs transition-colors"
             >
-              <span>Manage Khata</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ShoppingCart className="w-4 h-4" />
+              <span>Launch POS Billing Terminal</span>
+              <ArrowUpRight className="w-4 h-4 ml-auto" />
             </NavLink>
-          </div>
 
-          {/* Headline & Stat */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 relative z-10">
-            <div>
-              <h2 className="text-lg md:text-xl font-black text-white tracking-tight">
-                Market Udhaar Recovery
-              </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Immutable ledger with 1-click WhatsApp payment reminders and UPI links.
-              </p>
-              <div className="mt-3">
-                <span className="text-2xl md:text-3xl font-black text-warning tracking-tight">
-                  {formatCurrency(metrics.outstandingCredit || 0)}
-                </span>
-                <span className="text-xs text-slate-400 block mt-0.5">
-                  Total credit outstanding across market
-                </span>
-              </div>
-            </div>
-
-            {/* Quick action card inside */}
-            <div className="bg-black/40 border border-white/10 rounded-2xl p-4 flex flex-col justify-between">
-              <div className="text-xs text-slate-300 font-semibold mb-2">
-                Speed up cash collection:
-              </div>
-              <div className="space-y-1.5 text-[11px] text-slate-400">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                  <span>Auto-generates UPI payment deep link</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-aurora-purple"></span>
-                  <span>Includes store name & exact due amount</span>
-                </div>
-              </div>
-              <NavLink
-                to="/udhaar"
-                className="mt-3 py-2 px-3 bg-white/10 hover:bg-white/15 text-white font-bold rounded-xl text-center text-xs border border-white/10 transition active:scale-95"
-              >
-                Send WhatsApp Reminders
-              </NavLink>
-            </div>
-          </div>
-
-          {/* Micro stats strip */}
-          <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/10 mt-2 text-center relative z-10">
-            <div className="p-2 rounded-xl bg-white/[0.03]">
-              <span className="text-[10px] text-slate-400 uppercase font-bold block">Customers</span>
-              <span className="text-sm font-black text-white">{metrics.totalCustomers || 0}</span>
-            </div>
-            <div className="p-2 rounded-xl bg-white/[0.03]">
-              <span className="text-[10px] text-slate-400 uppercase font-bold block">Inventory Value</span>
-              <span className="text-sm font-black text-white">{formatCurrency(metrics.totalInventoryValue || 0)}</span>
-            </div>
-            <div className="p-2 rounded-xl bg-white/[0.03]">
-              <span className="text-[10px] text-slate-400 uppercase font-bold block">Low Stock</span>
-              <span className={`text-sm font-black ${metrics.lowStockCount > 0 ? 'text-coral' : 'text-emerald-400'}`}>
-                {metrics.lowStockCount || 0} items
-              </span>
+            <div className="flex items-center justify-between text-[11px] text-content-secondary pt-2 border-t border-borderline font-mono">
+              <span>F2: New Bill</span>
+              <span>F4: Search</span>
+              <span>Ctrl+Enter: Checkout</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* ========================================================= */}
-      {/* BENTO GRID: ROW 3 (Payment Distribution Donut + Top Products + Recent Transactions) */}
+      {/* ROW 3: Payment Breakdown, Top Products, Recent Bills     */}
       {/* ========================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Payment Methods Donut (4 cols) */}
-        <div className="lg:col-span-4 glass-card glass-card-hover p-6 flex flex-col justify-between relative overflow-hidden group">
+        {/* Payment Methods Distribution (4 cols) */}
+        <div className="lg:col-span-4 bg-surface border border-borderline rounded-xl p-6 shadow-card flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center text-aurora-purple">
-                <Receipt className="w-4 h-4" />
-              </div>
-              <span className="text-[11px] font-bold text-slate-400 tracking-wider uppercase">
-                {t('dashboard.paymentMethods')}
-              </span>
-            </div>
+            <span className="text-xs font-bold text-[#256D85] uppercase tracking-wider">
+              {t('dashboard.paymentMethods')}
+            </span>
+            <Receipt className="w-4 h-4 text-content-secondary" />
           </div>
 
-          <div className="h-52 w-full flex items-center justify-center">
+          <div className="h-48 w-full flex items-center justify-center my-2">
             {paymentPieData.length === 0 ? (
-              <div className="text-xs text-slate-400">No payment data recorded yet</div>
+              <div className="text-xs text-content-secondary">No payment data recorded yet</div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -492,9 +379,9 @@ export const DashboardPage: React.FC = () => {
                     data={paymentPieData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={75}
-                    paddingAngle={4}
+                    innerRadius={45}
+                    outerRadius={70}
+                    paddingAngle={3}
                     dataKey="value"
                   >
                     {paymentPieData.map((entry: any, index: number) => (
@@ -504,10 +391,10 @@ export const DashboardPage: React.FC = () => {
                   <Tooltip
                     formatter={(val: any) => [`₹${val}`, 'Amount']}
                     contentStyle={{
-                      backgroundColor: '#0F172A',
-                      color: '#F8F9FC',
-                      borderRadius: '16px',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      backgroundColor: '#FFFFFF',
+                      color: '#253449',
+                      borderRadius: '8px',
+                      border: '1px solid #E5EBF2',
                       fontSize: '12px'
                     }}
                   />
@@ -516,28 +403,23 @@ export const DashboardPage: React.FC = () => {
             )}
           </div>
 
-          <div className="flex flex-wrap gap-2 justify-center pt-2 border-t border-white/10">
+          <div className="flex flex-wrap gap-2 justify-center pt-2 border-t border-borderline">
             {paymentPieData.map((item: any, idx: number) => (
-              <div key={idx} className="flex items-center gap-1.5 text-[11px] text-slate-300">
-                <span className="w-2.5 h-2.5 rounded-full shadow-glow-purple" style={{ backgroundColor: pieColors[idx % pieColors.length] }}></span>
-                <span>{item.name}: <strong className="text-white">{formatCurrency(item.value)}</strong></span>
+              <div key={idx} className="flex items-center gap-1.5 text-xs text-content-secondary">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: pieColors[idx % pieColors.length] }}></span>
+                <span>{item.name}: <strong className="text-content-primary">{formatCurrency(item.value)}</strong></span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Top Selling Products (4 cols) */}
-        <div className="lg:col-span-4 glass-card glass-card-hover p-6 flex flex-col justify-between relative overflow-hidden group">
+        <div className="lg:col-span-4 bg-surface border border-borderline rounded-xl p-6 shadow-card flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center text-coral">
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <span className="text-[11px] font-bold text-slate-400 tracking-wider uppercase">
-                {t('dashboard.topProducts')}
-              </span>
-            </div>
-            <NavLink to="/inventory" className="text-xs font-semibold text-coral hover:underline flex items-center gap-1">
+            <span className="text-xs font-bold text-[#256D85] uppercase tracking-wider">
+              {t('dashboard.topProducts')}
+            </span>
+            <NavLink to="/inventory" className="text-xs font-semibold text-[#256D85] hover:underline flex items-center gap-1">
               <span>Inventory</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </NavLink>
@@ -545,20 +427,20 @@ export const DashboardPage: React.FC = () => {
 
           <div className="space-y-2.5 my-2 flex-1">
             {(metrics.topProducts || []).length === 0 ? (
-              <div className="text-xs text-slate-400 py-6 text-center">No sales recorded yet</div>
+              <div className="text-xs text-content-secondary py-6 text-center">No sales recorded yet</div>
             ) : (
               metrics.topProducts.slice(0, 4).map((p: any, idx: number) => (
-                <div key={idx} className="flex items-center justify-between p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 transition">
+                <div key={idx} className="flex items-center justify-between p-2.5 rounded-lg bg-[#F5F7FA] dark:bg-[#1C2C40] border border-borderline">
                   <div className="flex items-center gap-2.5">
-                    <span className="w-6 h-6 rounded-lg bg-gradient-to-tr from-aurora-purple to-coral text-white text-[11px] font-bold flex items-center justify-center shadow-glow-purple">
+                    <span className="w-6 h-6 rounded bg-[#256D85] text-white text-[11px] font-bold flex items-center justify-center">
                       {idx + 1}
                     </span>
                     <div>
-                      <div className="font-bold text-xs text-white truncate max-w-[140px]">{p.name}</div>
-                      <div className="text-[10px] text-slate-400">{p.totalQuantity} {p.unit} sold</div>
+                      <div className="font-bold text-xs text-content-primary truncate max-w-[140px]">{p.name}</div>
+                      <div className="text-[11px] text-content-secondary">{p.totalQuantity} {p.unit} sold</div>
                     </div>
                   </div>
-                  <div className="text-right font-black text-xs text-white">
+                  <div className="text-right font-bold text-xs text-content-primary">
                     {formatCurrency(p.totalSales)}
                   </div>
                 </div>
@@ -566,49 +448,44 @@ export const DashboardPage: React.FC = () => {
             )}
           </div>
 
-          <div className="pt-3 border-t border-white/10 text-[11px] text-slate-400 text-center">
-            Active catalogue: <strong className="text-white">{metrics.totalProducts || 0} Products</strong>
+          <div className="pt-3 border-t border-borderline text-xs text-content-secondary text-center">
+            Active catalogue: <strong className="text-content-primary">{metrics.totalProducts || 0} Products</strong>
           </div>
         </div>
 
-        {/* Recent Bills Stream (4 cols) */}
-        <div className="lg:col-span-4 glass-card glass-card-hover p-6 flex flex-col justify-between relative overflow-hidden group">
+        {/* Recent Transactions Stream (4 cols) */}
+        <div className="lg:col-span-4 bg-surface border border-borderline rounded-xl p-6 shadow-card flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center text-emerald-400">
-                <Receipt className="w-4 h-4" />
-              </div>
-              <span className="text-[11px] font-bold text-slate-400 tracking-wider uppercase">
-                {t('dashboard.recentTransactions')}
-              </span>
-            </div>
-            <NavLink to="/reports" className="text-xs font-semibold text-emerald-400 hover:underline flex items-center gap-1">
+            <span className="text-xs font-bold text-[#256D85] uppercase tracking-wider">
+              {t('dashboard.recentTransactions')}
+            </span>
+            <NavLink to="/reports" className="text-xs font-semibold text-[#256D85] hover:underline flex items-center gap-1">
               <span>All Bills</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </NavLink>
           </div>
 
-          <div className="divide-y divide-white/5 my-2 flex-1">
+          <div className="divide-y divide-borderline my-2 flex-1">
             {(metrics.recentSales || []).length === 0 ? (
-              <div className="text-xs text-slate-400 py-6 text-center">No bills created yet</div>
+              <div className="text-xs text-content-secondary py-6 text-center">No bills created yet</div>
             ) : (
               metrics.recentSales.slice(0, 4).map((sale: any) => (
                 <div key={sale._id} className="py-2.5 flex items-center justify-between text-xs">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-white">#{sale.invoiceNumber}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-white/10 text-slate-300 border border-white/10">
+                      <span className="font-mono font-bold text-content-primary">#{sale.invoiceNumber}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-[#F5F7FA] dark:bg-slate-800 text-content-secondary border border-borderline">
                         {sale.paymentMethod}
                       </span>
                     </div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">
+                    <div className="text-[11px] text-content-secondary mt-0.5">
                       {sale.customerName || 'Walk-in'} • {formatDateTime(sale.saleDate)}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-black text-white">{formatCurrency(sale.grandTotal)}</div>
+                    <div className="font-extrabold text-content-primary">{formatCurrency(sale.grandTotal)}</div>
                     {sale.udhaarAmount > 0 && (
-                      <span className="text-[10px] text-warning font-bold block">
+                      <span className="text-[10px] text-[#D97706] font-bold block">
                         Udhaar: {formatCurrency(sale.udhaarAmount)}
                       </span>
                     )}
@@ -618,8 +495,8 @@ export const DashboardPage: React.FC = () => {
             )}
           </div>
 
-          <div className="pt-3 border-t border-white/10 text-[11px] text-slate-400 text-center">
-            Today's expenses: <strong className="text-white">{formatCurrency(metrics.todayExpenses || 0)}</strong>
+          <div className="pt-3 border-t border-borderline text-xs text-content-secondary text-center">
+            Today's expenses: <strong className="text-content-primary">{formatCurrency(metrics.todayExpenses || 0)}</strong>
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { Sale } from '../models/Sale';
 import { Business } from '../models/Business';
 import { Customer } from '../models/Customer';
 import { CustomerLedger } from '../models/CustomerLedger';
+import { Product } from '../models/Product';
 import { StockService } from '../services/stockService';
 import { InvoiceService } from '../services/invoiceService';
 import { QrService } from '../services/qrService';
@@ -11,7 +12,8 @@ import { saleSchema, CustomerLedgerType, PaymentStatus, PaymentMethod } from '@v
 
 export class PosController {
   /**
-   * Process a new POS sale, deduct stock, update customer Udhaar ledger if credit
+   * Process a new POS sale with authoritative server-side price calculation,
+   * tenant-boundary validation, atomic stock deduction, and Udhaar ledger update.
    */
   static async createSale(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -38,6 +40,75 @@ export class PosController {
         return;
       }
 
+      // Authoritative Server-side Price & Tenant Ownership Verification (Defense against Price Manipulation #4 & Negative Quantity #5)
+      const productIds = validated.items.map(i => i.productId);
+      const dbProducts = await Product.find({
+        _id: { $in: productIds },
+        businessId,
+        isActive: true
+      });
+
+      if (dbProducts.length !== productIds.length) {
+        res.status(400).json({
+          success: false,
+          message: 'One or more items in the cart are invalid, inactive, or belong to another store.'
+        });
+        return;
+      }
+
+      const productMap = new Map(dbProducts.map(p => [p._id.toString(), p]));
+
+      // Server recalculates authoritative line items using trusted database values
+      const authoritativeItems = validated.items.map(item => {
+        const dbProduct = productMap.get(item.productId)!;
+        const authoritativeUnitPrice = dbProduct.sellingPrice > 0 ? dbProduct.sellingPrice : dbProduct.mrp;
+        const authoritativeTaxRate = dbProduct.taxRate || 0;
+        const qty = item.quantity;
+
+        if (qty <= 0 || !Number.isFinite(qty) || qty > 100000) {
+          throw new Error(`Invalid quantity ${qty} for product ${dbProduct.name}`);
+        }
+
+        const itemSubtotal = Math.round(qty * authoritativeUnitPrice * 100) / 100;
+        const discPercent = Math.min(100, Math.max(0, item.discountPercent || 0));
+        const itemDiscount = Math.round(itemSubtotal * (discPercent / 100) * 100) / 100;
+        const itemTaxable = Math.max(0, itemSubtotal - itemDiscount);
+        const itemTax = Math.round(itemTaxable * (authoritativeTaxRate / 100) * 100) / 100;
+        const itemTotal = itemTaxable;
+
+        return {
+          productId: dbProduct._id.toString(),
+          productName: dbProduct.name,
+          sku: dbProduct.sku,
+          barcode: dbProduct.barcode,
+          unit: dbProduct.unit,
+          quantity: qty,
+          unitPrice: authoritativeUnitPrice,
+          mrp: dbProduct.mrp,
+          discountPercent: discPercent,
+          discountAmount: itemDiscount,
+          taxRate: authoritativeTaxRate,
+          taxAmount: itemTax,
+          totalPrice: itemTotal,
+          batchNumber: item.batchNumber
+        };
+      });
+
+      const serverSubtotal = authoritativeItems.reduce((acc, i) => acc + (i.quantity * i.unitPrice), 0);
+      const billDiscPercent = Math.min(100, Math.max(0, validated.billDiscountPercent || 0));
+      const serverBillDiscountAmount = Math.round(serverSubtotal * (billDiscPercent / 100) * 100) / 100;
+      const serverTaxableTotal = Math.max(0, serverSubtotal - serverBillDiscountAmount);
+      const serverTotalTax = authoritativeItems.reduce((acc, i) => acc + i.taxAmount, 0);
+      const serverGrandTotal = Math.round(serverTaxableTotal);
+      const serverRoundOff = Math.round((serverGrandTotal - serverTaxableTotal) * 100) / 100;
+
+      // Reconcile payment totals with authoritative figures
+      const isUdhaar = validated.paymentMethod === PaymentMethod.UDHAAR;
+      const finalUdhaarAmount = isUdhaar
+        ? serverGrandTotal
+        : Math.min(serverGrandTotal, Math.max(0, validated.udhaarAmount || 0));
+      const finalAmountPaid = isUdhaar ? 0 : Math.max(0, serverGrandTotal - finalUdhaarAmount);
+
       // Generate invoice number sequentially based on business settings
       const prefix = business.settings.invoicePrefix || 'INV-';
       const seq = business.settings.nextInvoiceNumber || 1;
@@ -46,7 +117,7 @@ export class PosController {
       // 1. Deduct stock with inventory validation
       await StockService.deductStockForSale(
         businessId,
-        validated.items.map(i => ({
+        authoritativeItems.map(i => ({
           productId: i.productId,
           quantity: i.quantity,
           unitPrice: i.unitPrice
@@ -56,21 +127,21 @@ export class PosController {
         business.settings.allowNegativeStock
       );
 
-      // 2. Handle Customer Udhaar if udhaarAmount > 0
+      // 2. Handle Customer Udhaar if finalUdhaarAmount > 0
       let customerDoc = null;
       if (validated.customerId) {
         customerDoc = await Customer.findOne({ _id: validated.customerId, businessId });
         if (customerDoc) {
-          customerDoc.totalPurchases += validated.grandTotal;
-          if (validated.udhaarAmount > 0) {
-            customerDoc.currentBalance += validated.udhaarAmount;
+          customerDoc.totalPurchases += serverGrandTotal;
+          if (finalUdhaarAmount > 0) {
+            customerDoc.currentBalance += finalUdhaarAmount;
             
             // Record immutable Udhaar credit ledger entry
             await CustomerLedger.create({
               businessId,
               customerId: customerDoc._id,
               type: CustomerLedgerType.CREDIT_GIVEN,
-              amount: validated.udhaarAmount,
+              amount: finalUdhaarAmount,
               balanceAfter: customerDoc.currentBalance,
               invoiceNumber,
               referenceNumber: invoiceNumber,
@@ -86,13 +157,22 @@ export class PosController {
       business.settings.nextInvoiceNumber = seq + 1;
       await business.save();
 
-      // 4. Create Sale document
+      // 4. Create Sale document with verified authoritative figures
       const sale = await Sale.create({
         ...validated,
+        items: authoritativeItems,
+        subtotal: serverSubtotal,
+        billDiscountPercent: billDiscPercent,
+        billDiscountAmount: serverBillDiscountAmount,
+        totalTax: serverTotalTax,
+        roundOff: serverRoundOff,
+        grandTotal: serverGrandTotal,
+        amountPaid: finalAmountPaid,
+        udhaarAmount: finalUdhaarAmount,
         businessId,
         invoiceNumber,
         saleDate: new Date(),
-        paymentStatus: validated.udhaarAmount > 0 ? (validated.amountPaid > 0 ? PaymentStatus.PARTIAL : PaymentStatus.PENDING) : PaymentStatus.COMPLETED,
+        paymentStatus: finalUdhaarAmount > 0 ? (finalAmountPaid > 0 ? PaymentStatus.PARTIAL : PaymentStatus.PENDING) : PaymentStatus.COMPLETED,
         createdBy: userId
       });
 

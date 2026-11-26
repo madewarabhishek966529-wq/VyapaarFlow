@@ -36,14 +36,14 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Dynamic UPI Payment QR" maxWidth="max-w-sm">
       <div className="flex flex-col items-center text-center space-y-4">
-        <div className="bg-pearl-dark w-full py-2.5 px-4 rounded-xl border border-softgrey-border">
-          <p className="text-xs text-slate-500 font-medium">Paying to</p>
-          <p className="font-bold text-navy text-sm">{payeeName}</p>
-          <p className="text-xs text-coral font-mono font-semibold">{upiId}</p>
+        <div className="bg-app w-full py-2.5 px-4 rounded-xl border border-borderline">
+          <p className="text-xs text-content-secondary font-medium">Paying to</p>
+          <p className="font-bold text-[#142D4E] dark:text-white text-sm">{payeeName}</p>
+          <p className="text-xs text-[#D97706] font-mono font-semibold">{upiId}</p>
         </div>
 
         {/* Dynamic QR Code */}
-        <div className="p-4 bg-white rounded-2xl shadow-md border-2 border-slate-100 flex items-center justify-center">
+        <div className="p-4 bg-white rounded-2xl shadow-sm border border-borderline flex items-center justify-center">
           <QRCodeSVG
             value={upiUri}
             size={220}
@@ -53,12 +53,12 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
         </div>
 
         {/* Amount Banner */}
-        <div className="w-full bg-navy text-white py-3 rounded-xl shadow">
+        <div className="w-full bg-[#142D4E] text-white py-3 rounded-xl shadow-sm">
           <span className="text-xs text-slate-300 block">Total Amount to Pay</span>
-          <span className="text-2xl font-black text-coral">{formatCurrency(amount)}</span>
+          <span className="text-2xl font-black text-[#D97706]">{formatCurrency(amount)}</span>
         </div>
 
-        <p className="text-[11px] text-slate-500">
+        <p className="text-[11px] text-content-secondary">
           Scan with GPay, PhonePe, Paytm, BHIM, or any banking UPI app.
         </p>
 
@@ -69,7 +69,7 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
               onPaymentConfirmed();
               onClose();
             }}
-            className="w-full py-2.5 bg-success hover:bg-success-dark text-white font-bold rounded-xl shadow flex items-center justify-center gap-2 text-sm transition"
+            className="w-full py-2.5 bg-[#16A34A] hover:bg-emerald-700 text-white font-bold rounded-xl shadow-sm flex items-center justify-center gap-2 text-sm transition"
           >
             <CheckCircle2 className="w-4 h-4" />
             <span>Customer Paid ₹{amount.toFixed(2)}</span>
@@ -77,9 +77,9 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
 
           <button
             onClick={handleCopyLink}
-            className="w-full py-2 bg-softgrey hover:bg-softgrey-border text-navy font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition"
+            className="w-full py-2 vf-btn-outline rounded-xl text-xs flex items-center justify-center gap-1.5 transition text-content-secondary font-semibold"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? <Check className="w-3.5 h-3.5 text-[#16A34A]" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copied ? 'UPI Link Copied!' : 'Copy UPI Intent Link'}</span>
           </button>
         </div>

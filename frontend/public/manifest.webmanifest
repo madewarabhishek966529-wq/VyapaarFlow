@@ -4,8 +4,8 @@
   "description": "Smart POS Billing, Inventory, Udhaar Ledger & GST Management for Indian Retailers",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#14213D",
-  "theme_color": "#14213D",
+  "background_color": "#F5F7FA",
+  "theme_color": "#142D4E",
   "icons": [
     {
       "src": "/logo.svg",

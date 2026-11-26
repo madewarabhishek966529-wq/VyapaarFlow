@@ -4,20 +4,15 @@ import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate } from '../lib/utils';
 import { Modal } from '../components/Modal';
-import { DEFAULT_CATEGORIES, UNITS, GST_SLABS } from '@vyapaarflow/shared';
+import { DEFAULT_CATEGORIES, UNITS } from '@vyapaarflow/shared';
 import {
   Boxes,
   Plus,
   Search,
-  Filter,
   AlertTriangle,
   History,
   Edit2,
-  Trash2,
-  CheckCircle,
-  ArrowUpDown,
-  Sparkles,
-  Tag
+  ArrowUpDown
 } from 'lucide-react';
 
 export const InventoryPage: React.FC = () => {
@@ -110,21 +105,11 @@ export const InventoryPage: React.FC = () => {
     }
   });
 
-  const deleteProductMutation = useMutation({
-    mutationFn: (productId: string) => api.delete(`/products/${productId}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-    },
-    onError: (err: any) => {
-      alert(`Failed to delete product: ${err.message}`);
-    }
-  });
-
   const openAddModal = () => {
     setEditingProduct(null);
     setFormData({
       name: '',
-      sku: `SKU-${Date.now().toString().slice(-4)}`,
+      sku: `SKU-${Date.now().toString().slice(-5)}`,
       barcode: '',
       category: DEFAULT_CATEGORIES[0],
       brand: '',
@@ -133,7 +118,7 @@ export const InventoryPage: React.FC = () => {
       sellingPrice: 0,
       mrp: 0,
       taxRate: 0,
-      currentStock: 0,
+      currentStock: 10,
       minStockLevel: 5
     });
     setIsAddEditModalOpen(true);
@@ -183,45 +168,45 @@ export const InventoryPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-5 relative z-10">
+    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-5">
       {/* Top Header */}
-      <div className="glass-card p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-surface border border-borderline rounded-xl p-6 shadow-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="bento-tag bg-aurora-cyan/15 text-aurora-cyan border-aurora-cyan/30">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#256D85]/10 text-[#256D85] dark:text-[#368AA5] border border-[#256D85]/20">
               <Boxes className="w-3.5 h-3.5" />
               Catalogue & Stock Ledger
             </span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-[#142D4E] dark:text-white tracking-tight flex items-center gap-2">
             <span>{t('inventory.title')}</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-content-secondary mt-1">
             Manage product prices, barcodes, units, and auditable stock movement transactions.
           </p>
         </div>
 
+        {/* Primary Action Button (Amber CTA) */}
         <button
           onClick={openAddModal}
-          className="group relative flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-coral via-rose-500 to-aurora-purple text-white text-xs font-bold rounded-2xl shadow-glow-coral transition transform hover:-translate-y-0.5 active:scale-95 overflow-hidden"
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#D97706] hover:bg-[#B45309] text-white text-xs font-bold rounded-lg shadow-sm transition-all active:scale-[0.98]"
         >
-          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
           <Plus className="w-4 h-4" />
           <span>{t('inventory.addProductBtn')}</span>
         </button>
       </div>
 
       {/* Filters Bar */}
-      <div className="glass-card p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs">
+      <div className="bg-surface border border-borderline rounded-xl p-3.5 shadow-card flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs">
         {/* Search */}
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-content-muted absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search by product name, barcode, SKU, brand..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2.5 bg-slate-900/80 border border-white/10 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-aurora-purple/50 font-medium"
+            className="w-full pl-9 pr-3 py-2 bg-[#F5F7FA] dark:bg-slate-800 border border-borderline rounded-lg text-xs text-content-primary placeholder-content-muted focus:outline-none focus:ring-2 focus:ring-[#256D85]/30 focus:border-[#256D85] font-medium"
           />
         </div>
 
@@ -229,7 +214,7 @@ export const InventoryPage: React.FC = () => {
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-3 py-2.5 bg-slate-900/80 border border-white/10 rounded-xl font-medium text-slate-300 focus:outline-none focus:ring-2 focus:ring-aurora-purple/50"
+          className="px-3 py-2 bg-[#F5F7FA] dark:bg-slate-800 border border-borderline rounded-lg font-medium text-content-primary focus:outline-none focus:ring-2 focus:ring-[#256D85]/30"
         >
           <option value="All">All Categories</option>
           {DEFAULT_CATEGORIES.map((c) => (
@@ -242,10 +227,10 @@ export const InventoryPage: React.FC = () => {
         {/* Low Stock Toggle */}
         <button
           onClick={() => setLowStockFilter(!lowStockFilter)}
-          className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl font-semibold border transition active:scale-95 ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg font-semibold border transition-colors ${
             lowStockFilter
-              ? 'bg-coral/20 border-coral text-coral shadow-glow-coral'
-              : 'bg-white/5 text-slate-300 border-white/10 hover:border-white/20'
+              ? 'bg-amber-50 dark:bg-amber-950/40 border-[#D97706] text-[#D97706]'
+              : 'bg-surface text-content-secondary border-borderline hover:border-[#256D85]'
           }`}
         >
           <AlertTriangle className="w-3.5 h-3.5" />
@@ -254,31 +239,31 @@ export const InventoryPage: React.FC = () => {
       </div>
 
       {/* Products Table */}
-      <div className="glass-card overflow-hidden">
+      <div className="bg-surface border border-borderline rounded-xl shadow-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead>
-              <tr className="text-slate-400 font-bold border-b border-white/10">
+              <tr className="bg-slate-50 dark:bg-slate-800/50 text-content-secondary font-bold border-b border-borderline">
                 <th className="p-4">Product Name & SKU</th>
-                <th className="p-4">Category</th>
+                <th className="p-4 hidden sm:table-cell">Category</th>
                 <th className="p-4 text-center">Stock Status</th>
-                <th className="p-4 text-right">Cost Price</th>
+                <th className="p-4 text-right hidden md:table-cell">Cost Price</th>
                 <th className="p-4 text-right">Selling Rate</th>
-                <th className="p-4 text-right">MRP</th>
-                <th className="p-4 text-center">GST %</th>
+                <th className="p-4 text-right hidden lg:table-cell">MRP</th>
+                <th className="p-4 text-center hidden md:table-cell">GST %</th>
                 <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-borderline">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-slate-400">
+                  <td colSpan={8} className="p-8 text-center text-content-muted">
                     Loading inventory...
                   </td>
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-slate-400">
+                  <td colSpan={8} className="p-8 text-center text-content-muted">
                     No products found matching your filter criteria
                   </td>
                 </tr>
@@ -288,41 +273,42 @@ export const InventoryPage: React.FC = () => {
                   const isOut = p.currentStock <= 0;
 
                   return (
-                    <tr key={p._id} className="hover:bg-white/[0.03] transition">
+                    <tr key={p._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                       <td className="p-4">
-                        <div className="font-bold text-white text-sm">{p.name}</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-2">
-                          <span className="font-mono bg-white/5 border border-white/10 px-1.5 py-0.2 rounded text-slate-300 font-medium">
+                        <div className="font-bold text-content-primary text-sm">{p.name}</div>
+                        <div className="text-[11px] text-content-secondary mt-0.5 flex items-center gap-2 flex-wrap">
+                          <span className="font-mono bg-[#F5F7FA] dark:bg-slate-800 border border-borderline px-1.5 py-0.2 rounded text-content-primary font-medium">
                             {p.sku}
                           </span>
-                          {p.barcode && <span>Barcode: {p.barcode}</span>}
-                          {p.brand && <span>Brand: {p.brand}</span>}
+                          <span className="sm:hidden text-content-secondary">{p.category}</span>
+                          {p.barcode && <span className="hidden sm:inline">Barcode: {p.barcode}</span>}
+                          {p.brand && <span className="hidden sm:inline">Brand: {p.brand}</span>}
                         </div>
                       </td>
-                      <td className="p-4 text-slate-300 font-medium">{p.category}</td>
+                      <td className="p-4 text-content-secondary font-medium hidden sm:table-cell">{p.category}</td>
                       <td className="p-4 text-center">
                         <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
                             isOut
-                              ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                              ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-300'
                               : isLow
-                              ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                              : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-glow-emerald'
+                              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-300'
+                              : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-300'
                           }`}
                         >
                           {p.currentStock} {p.unit}
                         </span>
                       </td>
-                      <td className="p-4 text-right font-medium text-slate-400">
+                      <td className="p-4 text-right font-medium text-content-secondary hidden md:table-cell">
                         {formatCurrency(p.purchasePrice)}
                       </td>
-                      <td className="p-4 text-right font-black text-white text-sm">
+                      <td className="p-4 text-right font-extrabold text-content-primary text-sm">
                         {formatCurrency(p.sellingPrice)}
                       </td>
-                      <td className="p-4 text-right font-medium text-slate-500 line-through">
+                      <td className="p-4 text-right font-medium text-content-muted line-through hidden lg:table-cell">
                         {formatCurrency(p.mrp)}
                       </td>
-                      <td className="p-4 text-center font-semibold text-slate-300">{p.taxRate}%</td>
+                      <td className="p-4 text-center font-semibold text-content-secondary hidden md:table-cell">{p.taxRate}%</td>
                       <td className="p-4 text-center">
                         <div className="flex items-center justify-center gap-1.5">
                           {/* Stock Adjust button */}
@@ -332,10 +318,10 @@ export const InventoryPage: React.FC = () => {
                               setAdjustData({ type: 'ADJUSTMENT_ADD', quantity: 1, reason: '' });
                               setIsAdjustModalOpen(true);
                             }}
-                            className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition"
+                            className="p-1.5 text-content-secondary hover:text-[#256D85] hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
                             title="Adjust Stock"
                           >
-                            <ArrowUpDown className="w-3.5 h-3.5" />
+                            <ArrowUpDown className="w-4 h-4" />
                           </button>
 
                           {/* Audit History button */}
@@ -344,19 +330,19 @@ export const InventoryPage: React.FC = () => {
                               setHistoryProduct(p);
                               setIsHistoryModalOpen(true);
                             }}
-                            className="p-1.5 text-slate-400 hover:text-aurora-purple hover:bg-white/10 rounded-lg transition"
+                            className="p-1.5 text-content-secondary hover:text-[#256D85] hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
                             title="Stock Movement Ledger"
                           >
-                            <History className="w-3.5 h-3.5" />
+                            <History className="w-4 h-4" />
                           </button>
 
                           {/* Edit button */}
                           <button
                             onClick={() => openEditModal(p)}
-                            className="p-1.5 text-slate-400 hover:text-coral hover:bg-white/10 rounded-lg transition"
+                            className="p-1.5 text-content-secondary hover:text-[#D97706] hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
                             title="Edit Product"
                           >
-                            <Edit2 className="w-3.5 h-3.5" />
+                            <Edit2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -379,45 +365,45 @@ export const InventoryPage: React.FC = () => {
         <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="font-bold text-slate-300 block mb-1">Product Name *</label>
+              <label className="font-bold text-content-secondary block mb-1">Product Name *</label>
               <input
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
+                className="vf-input"
                 placeholder="e.g. Aashirvaad Atta 10kg"
               />
             </div>
 
             <div>
-              <label className="font-bold text-slate-300 block mb-1">SKU Code *</label>
+              <label className="font-bold text-content-secondary block mb-1">SKU Code *</label>
               <input
                 type="text"
                 required
                 value={formData.sku}
                 onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl font-mono text-white"
+                className="vf-input font-mono"
               />
             </div>
 
             <div>
-              <label className="font-bold text-slate-300 block mb-1">Barcode (EAN / UPC)</label>
+              <label className="font-bold text-content-secondary block mb-1">Barcode (EAN / UPC)</label>
               <input
                 type="text"
                 value={formData.barcode}
                 onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl font-mono text-white"
+                className="vf-input font-mono"
                 placeholder="e.g. 8901030012011"
               />
             </div>
 
             <div>
-              <label className="font-bold text-slate-300 block mb-1">Category *</label>
+              <label className="font-bold text-content-secondary block mb-1">Category *</label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
+                className="vf-input"
               >
                 {DEFAULT_CATEGORIES.map((c) => (
                   <option key={c} value={c}>
@@ -428,11 +414,11 @@ export const InventoryPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="font-bold text-slate-300 block mb-1">Unit of Measurement</label>
+              <label className="font-bold text-content-secondary block mb-1">Unit of Measurement</label>
               <select
                 value={formData.unit}
                 onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
+                className="vf-input"
               >
                 {UNITS.map((u) => (
                   <option key={u.code} value={u.code}>
@@ -443,110 +429,102 @@ export const InventoryPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="font-bold text-slate-300 block mb-1">Brand</label>
+              <label className="font-bold text-content-secondary block mb-1">Brand</label>
               <input
                 type="text"
                 value={formData.brand}
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
+                className="vf-input"
                 placeholder="e.g. ITC, Tata, Amul"
               />
             </div>
 
             <div>
-              <label className="font-bold text-slate-300 block mb-1">Purchase Price (Cost ₹) *</label>
+              <label className="font-bold text-content-secondary block mb-1">Cost / Purchase Price (₹)</label>
               <input
                 type="number"
-                step="0.01"
                 min="0"
-                required
+                step="any"
                 value={formData.purchasePrice}
-                onChange={(e) => setFormData({ ...formData, purchasePrice: e.target.value as any })}
-                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl font-bold text-white"
+                onChange={(e) => setFormData({ ...formData, purchasePrice: parseFloat(e.target.value) || 0 })}
+                className="vf-input"
               />
             </div>
 
             <div>
-              <label className="font-bold text-slate-300 block mb-1">Selling Price (Retail ₹) *</label>
+              <label className="font-bold text-content-secondary block mb-1">Selling Rate (₹) *</label>
               <input
                 type="number"
-                step="0.01"
                 min="0"
+                step="any"
                 required
                 value={formData.sellingPrice}
-                onChange={(e) => setFormData({ ...formData, sellingPrice: e.target.value as any })}
-                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl font-bold text-coral"
+                onChange={(e) => setFormData({ ...formData, sellingPrice: parseFloat(e.target.value) || 0 })}
+                className="vf-input"
               />
             </div>
 
             <div>
-              <label className="font-bold text-slate-300 block mb-1">MRP ₹ *</label>
+              <label className="font-bold text-content-secondary block mb-1">MRP (₹)</label>
               <input
                 type="number"
-                step="0.01"
                 min="0"
-                required
+                step="any"
                 value={formData.mrp}
-                onChange={(e) => setFormData({ ...formData, mrp: e.target.value as any })}
-                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
+                onChange={(e) => setFormData({ ...formData, mrp: parseFloat(e.target.value) || 0 })}
+                className="vf-input"
               />
             </div>
 
             <div>
-              <label className="font-bold text-slate-300 block mb-1">GST Tax Slab *</label>
-              <select
+              <label className="font-bold text-content-secondary block mb-1">GST Tax Rate (%)</label>
+              <input
+                type="number"
+                min="0"
+                max="28"
                 value={formData.taxRate}
-                onChange={(e) => setFormData({ ...formData, taxRate: parseFloat(e.target.value) })}
-                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
-              >
-                {GST_SLABS.map((slab) => (
-                  <option key={slab} value={slab}>
-                    {slab}% GST
-                  </option>
-                ))}
-              </select>
+                onChange={(e) => setFormData({ ...formData, taxRate: parseFloat(e.target.value) || 0 })}
+                className="vf-input"
+              />
             </div>
 
-            {!editingProduct && (
-              <div>
-                <label className="font-bold text-slate-300 block mb-1">Initial Opening Stock *</label>
-                <input
-                  type="number"
-                  min="0"
-                  required
-                  value={formData.currentStock}
-                  onChange={(e) => setFormData({ ...formData, currentStock: e.target.value as any })}
-                  className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl font-bold text-white"
-                />
-              </div>
-            )}
+            <div>
+              <label className="font-bold text-content-secondary block mb-1">Current Stock Quantity</label>
+              <input
+                type="number"
+                min="0"
+                value={formData.currentStock}
+                onChange={(e) => setFormData({ ...formData, currentStock: parseFloat(e.target.value) || 0 })}
+                className="vf-input"
+              />
+            </div>
 
             <div>
-              <label className="font-bold text-slate-300 block mb-1">Minimum Stock Alert Level</label>
+              <label className="font-bold text-content-secondary block mb-1">Low-Stock Alert Level</label>
               <input
                 type="number"
                 min="0"
                 value={formData.minStockLevel}
-                onChange={(e) => setFormData({ ...formData, minStockLevel: e.target.value as any })}
-                className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
+                onChange={(e) => setFormData({ ...formData, minStockLevel: parseFloat(e.target.value) || 0 })}
+                className="vf-input"
               />
             </div>
           </div>
 
-          <div className="pt-4 border-t border-white/10 flex items-center justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-4 border-t border-borderline">
             <button
               type="button"
               onClick={() => setIsAddEditModalOpen(false)}
-              className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-slate-300 font-semibold rounded-xl border border-white/10 transition"
+              className="vf-btn-outline"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saveProductMutation.isPending}
-              className="px-5 py-2.5 bg-gradient-to-r from-coral to-aurora-purple text-white font-bold rounded-xl shadow-glow-coral transition"
+              className="vf-btn-primary"
             >
-              {saveProductMutation.isPending ? 'Saving...' : editingProduct ? 'Update Product' : 'Add Product'}
+              {saveProductMutation.isPending ? 'Saving...' : 'Save Product'}
             </button>
           </div>
         </form>
@@ -560,110 +538,102 @@ export const InventoryPage: React.FC = () => {
         maxWidth="max-w-md"
       >
         <form onSubmit={handleAdjustSubmit} className="space-y-4 text-xs">
-          <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
-            <span className="text-slate-400 block">Current Stock:</span>
-            <span className="text-lg font-black text-white">
-              {adjustingProduct?.currentStock} {adjustingProduct?.unit}
-            </span>
-          </div>
-
           <div>
-            <label className="font-bold text-slate-300 block mb-1">Action Type</label>
+            <label className="font-bold text-content-secondary block mb-1">Adjustment Type</label>
             <select
               value={adjustData.type}
               onChange={(e) => setAdjustData({ ...adjustData, type: e.target.value })}
-              className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
+              className="vf-input"
             >
-              <option value="ADJUSTMENT_ADD">Stock-In / Add Units (+)</option>
-              <option value="ADJUSTMENT_SUBTRACT">Stock-Out / Remove Units (-)</option>
-              <option value="DAMAGE_WRITE_OFF">Damaged / Expired Goods (-)</option>
-              <option value="RETURN">Customer Return (+)</option>
+              <option value="ADJUSTMENT_ADD">Stock-In (+ Add to Inventory)</option>
+              <option value="ADJUSTMENT_SUBTRACT">Stock-Out (- Deduct Damaged/Lost)</option>
             </select>
           </div>
 
           <div>
-            <label className="font-bold text-slate-300 block mb-1">Quantity</label>
+            <label className="font-bold text-content-secondary block mb-1">Quantity</label>
             <input
               type="number"
-              min="0.01"
-              step="any"
+              min="1"
               required
               value={adjustData.quantity}
-              onChange={(e) => setAdjustData({ ...adjustData, quantity: e.target.value as any })}
-              className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl font-bold text-white"
+              onChange={(e) => setAdjustData({ ...adjustData, quantity: parseFloat(e.target.value) || 1 })}
+              className="vf-input"
             />
           </div>
 
           <div>
-            <label className="font-bold text-slate-300 block mb-1">Reason / Notes</label>
+            <label className="font-bold text-content-secondary block mb-1">Reason for Adjustment</label>
             <input
               type="text"
               required
-              placeholder="e.g. Physical inventory count correction, Broken bottle"
+              placeholder="e.g. Expired batch, physical recount, broken seal"
               value={adjustData.reason}
               onChange={(e) => setAdjustData({ ...adjustData, reason: e.target.value })}
-              className="w-full px-3 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white"
+              className="vf-input"
             />
           </div>
 
-          <div className="pt-3 border-t border-white/10 flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
               onClick={() => setIsAdjustModalOpen(false)}
-              className="px-4 py-2 bg-white/5 text-slate-300 rounded-xl border border-white/10"
+              className="vf-btn-outline"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={adjustStockMutation.isPending}
-              className="px-4 py-2 bg-gradient-to-r from-coral to-aurora-purple text-white font-bold rounded-xl shadow-glow-coral"
+              className="vf-btn-primary"
             >
-              {adjustStockMutation.isPending ? 'Updating...' : 'Record Stock Adjustment'}
+              {adjustStockMutation.isPending ? 'Updating...' : 'Record Adjustment'}
             </button>
           </div>
         </form>
       </Modal>
 
-      {/* Stock Movement History Ledger Modal */}
+      {/* History / Movement Ledger Modal */}
       <Modal
         isOpen={isHistoryModalOpen}
         onClose={() => setIsHistoryModalOpen(false)}
-        title={`Audit Trail: ${historyProduct?.name}`}
+        title={`Audit Ledger: ${historyProduct?.name}`}
         maxWidth="max-w-2xl"
       >
         <div className="space-y-3 text-xs">
-          <p className="text-slate-400">
-            Immutable movement ledger of all stock-ins, sales deductions, and adjustments.
-          </p>
-
-          <div className="max-h-80 overflow-y-auto divide-y divide-white/5 border border-white/10 rounded-2xl bg-white/[0.02]">
-            {movements.length === 0 ? (
-              <div className="p-6 text-center text-slate-400">No stock movements recorded yet</div>
-            ) : (
-              movements.map((m: any) => (
-                <div key={m._id} className="p-3.5 flex items-center justify-between hover:bg-white/[0.03]">
-                  <div>
-                    <span className="font-bold text-white block">{m.type}</span>
-                    <span className="text-[11px] text-slate-400">{m.reason || 'Operation ledger entry'}</span>
-                    <span className="text-[10px] text-slate-500 block">{formatDate(m.createdAt)}</span>
-                  </div>
-                  <div className="text-right">
-                    <span
-                      className={`font-black text-sm block ${
-                        m.quantityChange > 0 ? 'text-emerald-400' : 'text-coral'
-                      }`}
-                    >
-                      {m.quantityChange > 0 ? '+' : ''}
-                      {m.quantityChange}
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      Bal: {m.balanceAfter}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-slate-800/50 text-content-secondary font-bold border-b border-borderline">
+                  <th className="p-2.5">Date</th>
+                  <th className="p-2.5">Type</th>
+                  <th className="p-2.5 text-center">Change</th>
+                  <th className="p-2.5 text-center">Balance</th>
+                  <th className="p-2.5">Reason / Note</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-borderline">
+                {movements.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-4 text-center text-content-muted">
+                      No stock movement history recorded yet.
+                    </td>
+                  </tr>
+                ) : (
+                  movements.map((m) => (
+                    <tr key={m._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                      <td className="p-2.5 text-content-secondary">{formatDate(m.createdAt)}</td>
+                      <td className="p-2.5 font-bold text-content-primary">{m.type}</td>
+                      <td className={`p-2.5 text-center font-bold ${m.quantity > 0 ? 'text-emerald-600' : 'text-[#DC4C4C]'}`}>
+                        {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
+                      </td>
+                      <td className="p-2.5 text-center font-bold text-content-primary">{m.newStock}</td>
+                      <td className="p-2.5 text-content-secondary">{m.reason || '—'}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </Modal>

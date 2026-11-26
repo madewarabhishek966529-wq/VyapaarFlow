@@ -29,7 +29,7 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, CONFIG.JWT_SECRET) as AuthUser;
+    const decoded = jwt.verify(token, CONFIG.JWT_SECRET, { algorithms: ['HS256'] }) as AuthUser;
     req.user = decoded;
     if (decoded.businessId) {
       req.businessId = decoded.businessId;

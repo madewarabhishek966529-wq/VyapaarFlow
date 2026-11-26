@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { OfflineProvider } from './context/OfflineContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
@@ -25,7 +26,6 @@ const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m
 const RegisterPage = lazy(() => import('./pages/RegisterPage').then(m => ({ default: m.RegisterPage })));
 const OnboardingPage = lazy(() => import('./pages/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
 
-// Optimized QueryClient with 30s stale time to eliminate loading flickers
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -44,14 +44,10 @@ const ProtectedLayout: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#070A12] flex items-center justify-center relative overflow-hidden">
-        <div className="aurora-mesh" aria-hidden="true">
-          <div className="aurora-orb-1 animate-aurora-1" />
-          <div className="aurora-orb-2 animate-aurora-2" />
-        </div>
-        <div className="relative z-10 flex flex-col items-center gap-3">
-          <div className="w-12 h-12 border-4 border-aurora-purple border-t-transparent rounded-full animate-spin shadow-glow-purple"></div>
-          <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">Loading VyapaarFlow...</span>
+      <div className="min-h-screen bg-app flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-[#256D85] border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-xs font-semibold text-content-secondary uppercase tracking-wider">Loading VyapaarFlow...</span>
         </div>
       </div>
     );
@@ -67,19 +63,11 @@ const ProtectedLayout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#070A12] text-slate-100 relative overflow-x-hidden selection:bg-aurora-purple selection:text-white">
-      {/* Dynamic Ambient Aurora Background Mesh (Hardware Accelerated) */}
-      <div className="aurora-mesh" aria-hidden="true">
-        <div className="aurora-orb-1 animate-aurora-1" />
-        <div className="aurora-orb-2 animate-aurora-2" />
-        <div className="aurora-orb-3 animate-aurora-3" />
-        <div className="aurora-grid-dots" />
-      </div>
-
+    <div className="min-h-screen flex flex-col bg-app text-content-primary relative overflow-x-hidden selection:bg-[#256D85] selection:text-white transition-colors duration-150">
       <Navbar />
-      <div className="flex-1 flex overflow-hidden relative z-10">
+      <div className="flex-1 flex overflow-hidden relative">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-6 scroll-smooth">
+        <main className="flex-1 overflow-y-auto pb-20 md:pb-6 scroll-smooth bg-app">
           <Suspense fallback={<PageSkeleton />}>
             <Routes>
               <Route path="/dashboard" element={<DashboardPage />} />
@@ -105,31 +93,33 @@ const ProtectedLayout: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <LanguageProvider>
-          <OfflineProvider>
-            <BrowserRouter>
-              <Suspense
-                fallback={
-                  <div className="min-h-screen bg-[#070A12] flex items-center justify-center">
-                    <div className="w-10 h-10 border-4 border-coral border-t-transparent rounded-full animate-spin shadow-glow-coral"></div>
-                  </div>
-                }
-              >
-                <Routes>
-                  {/* Public Auth Routes */}
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
-                  <Route path="/onboarding" element={<OnboardingPage />} />
+      <ThemeProvider>
+        <AuthProvider>
+          <LanguageProvider>
+            <OfflineProvider>
+              <BrowserRouter>
+                <Suspense
+                  fallback={
+                    <div className="min-h-screen bg-app flex items-center justify-center">
+                      <div className="w-10 h-10 border-4 border-[#256D85] border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  }
+                >
+                  <Routes>
+                    {/* Public Auth Routes */}
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/onboarding" element={<OnboardingPage />} />
 
-                  {/* Protected Business App Routes */}
-                  <Route path="/*" element={<ProtectedLayout />} />
-                </Routes>
-              </Suspense>
-            </BrowserRouter>
-          </OfflineProvider>
-        </LanguageProvider>
-      </AuthProvider>
+                    {/* Protected Business App Routes */}
+                    <Route path="/*" element={<ProtectedLayout />} />
+                  </Routes>
+                </Suspense>
+              </BrowserRouter>
+            </OfflineProvider>
+          </LanguageProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };

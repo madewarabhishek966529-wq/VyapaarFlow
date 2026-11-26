@@ -35,13 +35,13 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} title={`Receipt #${invoiceNumber}`} maxWidth="max-w-md">
       <div className="space-y-4">
         {/* Paper Size selector */}
-        <div className="flex items-center justify-between text-xs bg-pearl p-2 rounded-xl border border-softgrey-border">
-          <span className="font-semibold text-slate-600">Printer Format:</span>
+        <div className="flex items-center justify-between text-xs bg-app p-2 rounded-xl border border-borderline">
+          <span className="font-semibold text-content-secondary">Printer Format:</span>
           <div className="flex gap-2">
             <button
               onClick={() => setPaperWidth('58')}
               className={`px-3 py-1 rounded-lg font-bold transition ${
-                paperWidth === '58' ? 'bg-navy text-white shadow-sm' : 'text-slate-600 hover:bg-softgrey'
+                paperWidth === '58' ? 'bg-[#142D4E] text-white shadow-sm' : 'text-content-secondary hover:bg-borderline/50'
               }`}
             >
               58mm Thermal
@@ -49,7 +49,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
             <button
               onClick={() => setPaperWidth('80')}
               className={`px-3 py-1 rounded-lg font-bold transition ${
-                paperWidth === '80' ? 'bg-navy text-white shadow-sm' : 'text-slate-600 hover:bg-softgrey'
+                paperWidth === '80' ? 'bg-[#142D4E] text-white shadow-sm' : 'text-content-secondary hover:bg-borderline/50'
               }`}
             >
               80mm Thermal
@@ -58,10 +58,10 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
         </div>
 
         {/* Realistic ESC/POS Thermal Receipt Preview */}
-        <div className="bg-pearl-light border-2 border-dashed border-slate-300 p-4 rounded-xl shadow-inner overflow-x-auto">
+        <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-borderline p-4 rounded-xl shadow-inner overflow-x-auto">
           <pre
             id="printable-receipt"
-            className="font-mono text-xs text-slate-800 leading-relaxed whitespace-pre"
+            className="font-mono text-xs text-content-primary leading-relaxed whitespace-pre"
           >
             {receiptText}
           </pre>
@@ -71,14 +71,14 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
         <div className="flex items-center gap-3 pt-2">
           <button
             onClick={handlePrint}
-            className="flex-1 py-2.5 bg-coral hover:bg-coral-hover text-white font-bold rounded-xl shadow flex items-center justify-center gap-2 text-sm transition"
+            className="flex-1 py-2.5 bg-[#D97706] hover:bg-amber-600 text-white font-bold rounded-xl shadow-sm flex items-center justify-center gap-2 text-sm transition"
           >
             <Printer className="w-4 h-4" />
             <span>Print Thermal Receipt</span>
           </button>
           <button
             onClick={handleDownloadTxt}
-            className="px-4 py-2.5 bg-softgrey hover:bg-softgrey-border text-navy font-semibold rounded-xl text-sm transition"
+            className="px-4 py-2.5 vf-btn-outline rounded-xl text-sm transition text-content-secondary font-semibold"
             title="Download text format"
           >
             <Download className="w-4 h-4" />

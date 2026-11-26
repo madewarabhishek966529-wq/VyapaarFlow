@@ -4,7 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { formatCurrency } from '../lib/utils';
-import { Settings, Sparkles, Check, Store, ShieldCheck, Globe } from 'lucide-react';
+import { Settings, Check, Store } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const { business, updateBusinessSettings } = useAuth();
@@ -62,27 +62,27 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-8">
+    <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-black text-navy flex items-center gap-2">
-          <Settings className="w-5 h-5 text-coral" />
+        <h1 className="text-2xl font-extrabold text-[#142D4E] dark:text-white flex items-center gap-2">
+          <Settings className="w-5 h-5 text-[#256D85]" />
           <span>{t('settings.title')}</span>
         </h1>
-        <p className="text-xs text-slate-500 mt-1">
+        <p className="text-xs text-content-secondary mt-1">
           Configure shop branding, UPI payment QR, thermal receipt notes, and subscription plans
         </p>
       </div>
 
       {/* Shop Profile & Settings Form */}
-      <form onSubmit={handleSaveProfile} className="bg-white p-6 rounded-2xl border border-softgrey-border shadow-sm space-y-6 text-xs">
-        <div className="flex items-center justify-between border-b border-softgrey-border pb-3">
-          <h2 className="text-sm font-bold text-navy flex items-center gap-2">
-            <Store className="w-4 h-4 text-coral" />
+      <form onSubmit={handleSaveProfile} className="bg-surface p-6 rounded-xl border border-borderline shadow-card space-y-6 text-xs">
+        <div className="flex items-center justify-between border-b border-borderline pb-3">
+          <h2 className="text-sm font-bold text-[#142D4E] dark:text-white flex items-center gap-2">
+            <Store className="w-4 h-4 text-[#256D85]" />
             <span>Store Profile & Billing Configuration</span>
           </h2>
           {saveSuccess && (
-            <span className="text-xs font-bold text-success flex items-center gap-1">
+            <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
               <Check className="w-4 h-4" />
               <span>Saved successfully!</span>
             </span>
@@ -91,44 +91,44 @@ export const SettingsPage: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Business Name *</label>
+            <label className="font-bold text-content-secondary block mb-1">Business Name *</label>
             <input
               type="text"
               required
               value={shopName}
               onChange={(e) => setShopName(e.target.value)}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-semibold"
+              className="vf-input font-semibold"
             />
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Store UPI VPA (For Dynamic QR) *</label>
+            <label className="font-bold text-content-secondary block mb-1">Store UPI VPA (For Dynamic QR) *</label>
             <input
               type="text"
               required
               placeholder="e.g. yourstore@okicici"
               value={upiId}
               onChange={(e) => setUpiId(e.target.value)}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-mono text-coral font-bold"
+              className="vf-input font-mono text-[#D97706] font-bold"
             />
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">UPI Payee Display Name</label>
+            <label className="font-bold text-content-secondary block mb-1">UPI Payee Display Name</label>
             <input
               type="text"
               value={upiName}
               onChange={(e) => setUpiName(e.target.value)}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl"
+              className="vf-input"
             />
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Language Preference</label>
+            <label className="font-bold text-content-secondary block mb-1">Language Preference</label>
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value as any)}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-semibold"
+              className="vf-input font-semibold"
             >
               <option value="en">English</option>
               <option value="hi">हिन्दी (Hindi)</option>
@@ -137,44 +137,44 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Invoice Prefix</label>
+            <label className="font-bold text-content-secondary block mb-1">Invoice Prefix</label>
             <input
               type="text"
               value={invoicePrefix}
               onChange={(e) => setInvoicePrefix(e.target.value)}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-mono"
+              className="vf-input font-mono"
             />
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Next Invoice Sequence Number</label>
+            <label className="font-bold text-content-secondary block mb-1">Next Invoice Sequence Number</label>
             <input
               type="number"
               min="1"
               value={nextInvoiceNumber}
               onChange={(e) => setNextInvoiceNumber(e.target.value as any)}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl font-bold"
+              className="vf-input font-bold"
             />
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Thermal Receipt Header Note</label>
+            <label className="font-bold text-content-secondary block mb-1">Thermal Receipt Header Note</label>
             <input
               type="text"
               value={headerNote}
               onChange={(e) => setHeaderNote(e.target.value)}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl"
+              className="vf-input"
               placeholder="e.g. Dhanyawad! Please visit again."
             />
           </div>
 
           <div>
-            <label className="font-bold text-slate-700 block mb-1">Thermal Receipt Footer Note</label>
+            <label className="font-bold text-content-secondary block mb-1">Thermal Receipt Footer Note</label>
             <input
               type="text"
               value={footerNote}
               onChange={(e) => setFooterNote(e.target.value)}
-              className="w-full px-3 py-2 bg-pearl border border-softgrey-border rounded-xl"
+              className="vf-input"
               placeholder="e.g. Goods once sold cannot be returned."
             />
           </div>
@@ -183,7 +183,7 @@ export const SettingsPage: React.FC = () => {
         <div className="flex justify-end pt-3">
           <button
             type="submit"
-            className="px-6 py-2.5 bg-coral hover:bg-coral-hover text-white font-bold rounded-xl shadow transition"
+            className="vf-btn-primary"
           >
             {t('common.save')}
           </button>
@@ -193,11 +193,10 @@ export const SettingsPage: React.FC = () => {
       {/* Subscription Plans Section */}
       <div className="space-y-4">
         <div>
-          <h2 className="text-base font-black text-navy flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-coral" />
-            <span>SaaS Subscription Plans & Pricing</span>
+          <h2 className="text-base font-extrabold text-[#142D4E] dark:text-white">
+            SaaS Subscription Plans & Pricing
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-content-secondary mt-0.5">
             Select the right plan for your business scale. No expensive external API fees required.
           </p>
         </div>
@@ -209,31 +208,31 @@ export const SettingsPage: React.FC = () => {
             return (
               <div
                 key={p.id}
-                className={`bg-white rounded-2xl p-6 border flex flex-col justify-between transition ${
+                className={`bg-surface rounded-xl p-6 border flex flex-col justify-between transition-shadow ${
                   p.recommended
-                    ? 'border-coral ring-2 ring-coral/20 shadow-xl'
-                    : 'border-softgrey-border shadow-sm'
+                    ? 'border-[#256D85] ring-2 ring-[#256D85]/20 shadow-lg'
+                    : 'border-borderline shadow-card'
                 }`}
               >
                 <div>
                   <div className="flex justify-between items-center mb-3">
-                    <span className="font-bold text-sm text-navy">{p.name}</span>
+                    <span className="font-bold text-sm text-[#142D4E] dark:text-white">{p.name}</span>
                     {p.recommended && (
-                      <span className="text-[10px] bg-coral text-white font-bold px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] bg-[#256D85] text-white font-bold px-2 py-0.5 rounded">
                         RECOMMENDED
                       </span>
                     )}
                   </div>
 
                   <div className="my-4">
-                    <span className="text-3xl font-black text-navy">{formatCurrency(p.price)}</span>
-                    <span className="text-xs text-slate-500 ml-1">/{p.billingCycle}</span>
+                    <span className="text-3xl font-extrabold text-[#142D4E] dark:text-white">{formatCurrency(p.price)}</span>
+                    <span className="text-xs text-content-secondary ml-1">/{p.billingCycle}</span>
                   </div>
 
-                  <ul className="space-y-2.5 text-xs text-slate-600 mb-6">
+                  <ul className="space-y-2.5 text-xs text-content-secondary mb-6">
                     {p.features.map((feat: string, fIdx: number) => (
                       <li key={fIdx} className="flex items-start gap-2">
-                        <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
+                        <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                         <span>{feat}</span>
                       </li>
                     ))}
@@ -243,12 +242,12 @@ export const SettingsPage: React.FC = () => {
                 <button
                   onClick={() => upgradeMutation.mutate(p.id)}
                   disabled={isCurrent || upgradeMutation.isPending}
-                  className={`w-full py-2.5 rounded-xl font-bold text-xs transition ${
+                  className={`w-full py-2.5 rounded-lg font-bold text-xs transition-colors ${
                     isCurrent
-                      ? 'bg-slate-100 text-slate-400 cursor-default'
+                      ? 'bg-slate-100 dark:bg-slate-800 text-content-muted cursor-default'
                       : p.recommended
-                      ? 'bg-coral hover:bg-coral-hover text-white shadow-md'
-                      : 'bg-navy hover:bg-navy-light text-white'
+                      ? 'bg-[#D97706] hover:bg-[#B45309] text-white shadow-sm'
+                      : 'bg-[#256D85] hover:bg-[#1E576B] text-white shadow-sm'
                   }`}
                 >
                   {isCurrent ? 'Current Plan' : `Upgrade to ${p.name}`}

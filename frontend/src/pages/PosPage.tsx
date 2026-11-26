@@ -11,7 +11,6 @@ import { ThermalReceiptModal } from '../components/ThermalReceiptModal';
 import { A4InvoiceModal } from '../components/A4InvoiceModal';
 import { UpiQrModal } from '../components/UpiQrModal';
 import { Modal } from '../components/Modal';
-import confetti from 'canvas-confetti';
 import {
   Search,
   Camera,
@@ -19,15 +18,9 @@ import {
   Plus,
   Minus,
   UserPlus,
-  Printer,
-  QrCode,
-  CreditCard,
   CheckCircle,
-  AlertCircle,
-  Sparkles,
   ShoppingBag,
-  Zap,
-  Tag
+  Zap
 } from 'lucide-react';
 
 interface CartItem {
@@ -101,22 +94,21 @@ export const PosPage: React.FC = () => {
   const products: any[] = prodData || [];
   const customers: any[] = custData?.data?.customers || [];
 
-  // Memoized product filter for zero-lag instant search & barcode lookup
+  // Filter products by search query
   const filteredProducts = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return [];
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
     return products.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.sku.toLowerCase().includes(q) ||
         (p.barcode && p.barcode.includes(q))
     );
-  }, [searchQuery, products]);
+  }, [products, searchQuery]);
 
-  // Add product to cart
+  // Cart operations
   const addToCart = (product: any, quantity: number = 1) => {
     const existingIndex = cart.findIndex((item) => item.productId === product._id);
-
     const price = product.sellingPrice || product.mrp;
     const taxRate = product.taxRate || 0;
 
@@ -130,7 +122,7 @@ export const PosPage: React.FC = () => {
       updated[existingIndex].quantity = newQty;
       updated[existingIndex].discountAmount = disc;
       updated[existingIndex].taxAmount = tax;
-      updated[existingIndex].totalPrice = Math.round((sub - disc + tax) * 100) / 100;
+      updated[existingIndex].totalPrice = Math.round((sub - disc) * 100) / 100;
       setCart(updated);
     } else {
       const sub = quantity * price;
@@ -150,7 +142,7 @@ export const PosPage: React.FC = () => {
         discountAmount: disc,
         taxRate,
         taxAmount: tax,
-        totalPrice: Math.round((sub - disc + tax) * 100) / 100
+        totalPrice: Math.round((sub - disc) * 100) / 100
       };
       setCart([newItem, ...cart]);
     }
@@ -172,7 +164,7 @@ export const PosPage: React.FC = () => {
     updated[index].quantity = newQty;
     updated[index].discountAmount = disc;
     updated[index].taxAmount = tax;
-    updated[index].totalPrice = Math.round((sub - disc + tax) * 100) / 100;
+    updated[index].totalPrice = Math.round((sub - disc) * 100) / 100;
     setCart(updated);
   };
 
@@ -190,7 +182,7 @@ export const PosPage: React.FC = () => {
     }
   };
 
-  // Memoized financial calculations to prevent unnecessary re-computations
+  // Financial calculations
   const { subtotal, billDiscountAmount, taxableTotal, totalTax, roundedGrandTotal, roundOff } = useMemo(() => {
     const sub = cart.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
     const disc = Math.round(sub * (billDiscountPercent / 100) * 100) / 100;
@@ -208,27 +200,26 @@ export const PosPage: React.FC = () => {
     };
   }, [cart, billDiscountPercent]);
 
-  // Tendered cash calculation
+  // Cash change calculations
   const cashGivenNum = parseFloat(cashTendered) || 0;
-  const cashChange = cashGivenNum > roundedGrandTotal ? cashGivenNum - roundedGrandTotal : 0;
+  const cashChange = Math.max(0, cashGivenNum - roundedGrandTotal);
 
-  // Complete POS Sale
-  const handleCompleteSale = async (overridePaymentMethod?: string) => {
-    if (cart.length === 0) return;
+  // Complete sale
+  const handleCompleteSale = async (overrideMethod?: string) => {
+    if (cart.length === 0) {
+      alert('Cart is empty. Please add items before checkout.');
+      return;
+    }
 
-    const method = overridePaymentMethod || paymentMethod;
-    const isUdhaar = method === 'UDHAAR';
-    const amountPaid = isUdhaar ? 0 : roundedGrandTotal;
-    const udhaarAmount = isUdhaar ? roundedGrandTotal : 0;
+    const effectiveMethod = overrideMethod || paymentMethod;
 
-    if (isUdhaar && !selectedCustomer) {
-      alert('Please select or add a customer to record an Udhaar (credit) sale!');
+    if (effectiveMethod === 'UDHAAR' && !selectedCustomer) {
+      alert('A registered customer is required to give Udhaar credit.');
       setIsCustomerModalOpen(true);
       return;
     }
 
     setIsSubmitting(true);
-    const idempotencyKey = `sale_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
     const salePayload = {
       customerId: selectedCustomer?._id,
@@ -241,10 +232,10 @@ export const PosPage: React.FC = () => {
       totalTax,
       roundOff,
       grandTotal: roundedGrandTotal,
-      paymentMethod: method,
-      amountPaid,
-      udhaarAmount,
-      idempotencyKey
+      paymentMethod: effectiveMethod,
+      amountPaid: effectiveMethod === 'UDHAAR' ? 0 : roundedGrandTotal,
+      udhaarAmount: effectiveMethod === 'UDHAAR' ? roundedGrandTotal : 0,
+      idempotencyKey: `pos-${Date.now()}-${Math.random().toString(36).substring(7)}`
     };
 
     try {
@@ -254,7 +245,6 @@ export const PosPage: React.FC = () => {
         const res = await api.post('/pos/sale', salePayload);
         resultSale = res.data;
 
-        // Fetch formatted thermal receipt
         try {
           const recRes = await api.get(`/pos/receipt/${resultSale._id}`);
           setThermalText(recRes.data?.receiptText || '');
@@ -262,7 +252,6 @@ export const PosPage: React.FC = () => {
           console.warn('Could not fetch thermal receipt text:', e);
         }
       } else {
-        // Queue offline in IndexedDB
         await queueOfflineSale(salePayload);
         await refreshPendingCount();
         resultSale = {
@@ -272,13 +261,6 @@ export const PosPage: React.FC = () => {
         };
       }
 
-      // Festive celebration animation
-      confetti({
-        particleCount: 55,
-        spread: 65,
-        origin: { y: 0.8 }
-      });
-
       setCreatedSale(resultSale);
       setCart([]);
       setBillDiscountPercent(0);
@@ -287,7 +269,6 @@ export const PosPage: React.FC = () => {
       setSuccessToast(`Bill #${resultSale.invoiceNumber} created successfully!`);
       setTimeout(() => setSuccessToast(null), 4000);
 
-      // Open receipt modal
       setIsReceiptModalOpen(true);
     } catch (err: any) {
       alert(`Error creating sale: ${err.message}`);
@@ -296,7 +277,6 @@ export const PosPage: React.FC = () => {
     }
   };
 
-  // Keyboard shortcut listener: F2 for new search, Ctrl+Enter for checkout
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'F2') {
@@ -312,7 +292,6 @@ export const PosPage: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [cart, selectedCustomer, paymentMethod, subtotal]);
 
-  // Create new customer inline
   const handleCreateCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCustName || !newCustMobile) return;
@@ -333,47 +312,47 @@ export const PosPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-5 relative z-10">
+    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-5">
       {/* Toast */}
       {successToast && (
-        <div className="fixed top-20 right-6 bg-emerald-500 text-white px-5 py-3.5 rounded-2xl shadow-glow-emerald flex items-center gap-2.5 z-50 animate-in slide-in-from-top-4 border border-emerald-400">
+        <div className="fixed top-20 right-6 bg-emerald-600 text-white px-5 py-3 rounded-lg shadow-lg flex items-center gap-2.5 z-50 animate-in slide-in-from-top-4 border border-emerald-500">
           <CheckCircle className="w-5 h-5" />
           <span className="font-bold text-xs">{successToast}</span>
         </div>
       )}
 
       {/* POS Top Bar */}
-      <div className="glass-card p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 relative z-30">
+      <div className="bg-surface border border-borderline rounded-xl p-3.5 shadow-card flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 relative z-30">
         {/* Product Search Bar */}
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-content-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             ref={searchInputRef}
             type="text"
             placeholder={t('pos.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-white/10 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-aurora-purple/50 font-medium"
+            className="w-full pl-10 pr-4 py-2 bg-[#F5F7FA] dark:bg-[#1C2C40] border border-borderline rounded-lg text-xs text-content-primary placeholder-content-muted focus:outline-none focus:ring-2 focus:ring-[#256D85]/30 focus:border-[#256D85] font-medium"
           />
 
           {/* Search Dropdown Results */}
           {filteredProducts.length > 0 && (
-            <div className="absolute left-0 right-0 top-full mt-2 bg-slate-900/95 backdrop-blur-2xl rounded-2xl shadow-glass border border-white/15 max-h-72 overflow-y-auto z-50 divide-y divide-white/5 animate-in fade-in slide-in-from-top-2">
+            <div className="absolute left-0 right-0 top-full mt-1.5 bg-surface rounded-xl shadow-lg border border-borderline max-h-72 overflow-y-auto z-50 divide-y divide-borderline">
               {filteredProducts.slice(0, 10).map((p: any) => (
                 <button
                   key={p._id}
                   onClick={() => addToCart(p)}
-                  className="w-full text-left p-3.5 hover:bg-white/5 flex items-center justify-between text-xs transition"
+                  className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center justify-between text-xs transition-colors"
                 >
                   <div>
-                    <div className="font-bold text-white">{p.name}</div>
-                    <div className="text-[11px] text-slate-400">
-                      SKU: <span className="font-mono text-slate-300">{p.sku}</span> {p.barcode && `| Barcode: ${p.barcode}`} | Stock: <span className="text-emerald-400 font-bold">{p.currentStock} {p.unit}</span>
+                    <div className="font-bold text-content-primary">{p.name}</div>
+                    <div className="text-[11px] text-content-secondary">
+                      SKU: <span className="font-mono text-content-primary">{p.sku}</span> {p.barcode && `| Barcode: ${p.barcode}`} | Stock: <span className="text-emerald-600 font-bold">{p.currentStock} {p.unit}</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-black text-coral text-sm">{formatCurrency(p.sellingPrice)}</div>
-                    <div className="text-[10px] text-slate-500 line-through">MRP: {formatCurrency(p.mrp)}</div>
+                    <div className="font-extrabold text-[#D97706] text-sm">{formatCurrency(p.sellingPrice)}</div>
+                    <div className="text-[10px] text-content-muted line-through">MRP: {formatCurrency(p.mrp)}</div>
                   </div>
                 </button>
               ))}
@@ -384,23 +363,23 @@ export const PosPage: React.FC = () => {
         {/* Scan Barcode Button */}
         <button
           onClick={() => setIsScannerOpen(true)}
-          className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold rounded-xl shadow transition active:scale-95"
+          className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 border border-borderline text-content-primary text-xs font-semibold rounded-lg shadow-sm transition-colors"
         >
-          <Camera className="w-4 h-4 text-coral" />
+          <Camera className="w-4 h-4 text-[#256D85]" />
           <span>{t('pos.scanBarcode')}</span>
         </button>
 
         {/* Customer Selector */}
         <div className="flex items-center gap-2">
           {selectedCustomer ? (
-            <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 text-xs">
+            <div className="flex items-center gap-2 bg-[#F5F7FA] dark:bg-[#1C2C40] px-3 py-1.5 rounded-lg border border-borderline text-xs">
               <div>
-                <span className="font-bold text-white">{selectedCustomer.name}</span>
-                <span className="text-[11px] text-slate-400 block">{selectedCustomer.mobile}</span>
+                <span className="font-bold text-content-primary">{selectedCustomer.name}</span>
+                <span className="text-[11px] text-content-secondary block">{selectedCustomer.mobile}</span>
               </div>
               <button
                 onClick={() => setSelectedCustomer(null)}
-                className="text-slate-400 hover:text-coral text-xs font-bold p-1"
+                className="text-content-muted hover:text-[#DC4C4C] text-xs font-bold p-1 ml-1"
               >
                 ✕
               </button>
@@ -408,9 +387,9 @@ export const PosPage: React.FC = () => {
           ) : (
             <button
               onClick={() => setIsCustomerModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 text-slate-200 font-semibold text-xs rounded-xl border border-white/10 transition active:scale-95"
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 text-content-primary font-semibold text-xs rounded-lg border border-borderline shadow-sm transition-colors"
             >
-              <UserPlus className="w-3.5 h-3.5 text-coral" />
+              <UserPlus className="w-3.5 h-3.5 text-[#256D85]" />
               <span>{t('pos.selectCustomer')}</span>
             </button>
           )}
@@ -420,16 +399,16 @@ export const PosPage: React.FC = () => {
       {/* Main Billing Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left: Cart Items Table (8 cols) */}
-        <div className="lg:col-span-8 glass-card p-5 flex flex-col min-h-[500px]">
-          <div className="pb-3 border-b border-white/10 flex items-center justify-between">
+        <div className="lg:col-span-8 bg-surface border border-borderline rounded-xl p-5 shadow-card flex flex-col min-h-[500px]">
+          <div className="pb-3 border-b border-borderline flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ShoppingBag className="w-4 h-4 text-coral" />
-              <h2 className="font-bold text-sm text-white">Billing Items ({cart.length})</h2>
+              <ShoppingBag className="w-4 h-4 text-[#256D85]" />
+              <h2 className="font-bold text-sm text-[#142D4E] dark:text-white">Billing Items ({cart.length})</h2>
             </div>
             {cart.length > 0 && (
               <button
                 onClick={() => setCart([])}
-                className="text-xs text-coral hover:underline font-semibold"
+                className="text-xs text-[#DC4C4C] hover:underline font-semibold"
               >
                 Clear Cart
               </button>
@@ -439,16 +418,16 @@ export const PosPage: React.FC = () => {
           {/* Cart Table */}
           <div className="flex-1 overflow-x-auto my-2">
             {cart.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-400">
-                <ShoppingBag className="w-12 h-12 text-slate-600 mb-2" />
+              <div className="h-full flex flex-col items-center justify-center p-8 text-center text-content-secondary">
+                <ShoppingBag className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-2" />
                 <p className="text-xs font-medium">{t('pos.cartEmpty')}</p>
                 <div className="mt-4 flex flex-wrap gap-2 justify-center max-w-md">
-                  <span className="text-[11px] text-slate-500">Quick add:</span>
+                  <span className="text-[11px] text-content-muted">Quick add:</span>
                   {products.slice(0, 4).map((p) => (
                     <button
                       key={p._id}
                       onClick={() => addToCart(p)}
-                      className="text-xs bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-xl border border-white/10 text-slate-300 font-medium transition"
+                      className="text-xs bg-[#F5F7FA] dark:bg-[#1C2C40] hover:bg-slate-200 dark:hover:bg-slate-700 px-2.5 py-1 rounded-md border border-borderline text-content-primary font-medium transition-colors"
                     >
                       + {p.name.substring(0, 18)}...
                     </button>
@@ -458,52 +437,53 @@ export const PosPage: React.FC = () => {
             ) : (
               <table className="w-full text-xs text-left border-collapse">
                 <thead>
-                  <tr className="text-slate-400 font-bold border-b border-white/10">
-                    <th className="p-3">#</th>
+                  <tr className="text-content-secondary font-bold border-b border-borderline">
+                    <th className="p-3 hidden sm:table-cell">#</th>
                     <th className="p-3">{t('pos.item')}</th>
-                    <th className="p-3 text-right">{t('pos.price')}</th>
+                    <th className="p-3 text-right hidden sm:table-cell">{t('pos.price')}</th>
                     <th className="p-3 text-center">{t('pos.qty')}</th>
-                    <th className="p-3 text-right">GST %</th>
+                    <th className="p-3 text-right hidden md:table-cell">GST %</th>
                     <th className="p-3 text-right">{t('pos.amount')}</th>
                     <th className="p-3 text-center"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-borderline">
                   {cart.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-white/[0.03] transition">
-                      <td className="p-3 text-slate-500">{idx + 1}</td>
+                    <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="p-3 text-content-muted hidden sm:table-cell">{idx + 1}</td>
                       <td className="p-3">
-                        <div className="font-bold text-white">{item.productName}</div>
-                        <div className="text-[10px] text-slate-400 font-mono">
-                          {item.sku} • {item.unit}
+                        <div className="font-bold text-content-primary text-xs sm:text-sm">{item.productName}</div>
+                        <div className="text-[10px] text-content-secondary font-mono flex items-center gap-1.5 flex-wrap">
+                          <span>{item.sku} • {item.unit}</span>
+                          <span className="sm:hidden text-content-primary font-semibold">({formatCurrency(item.unitPrice)})</span>
                         </div>
                       </td>
-                      <td className="p-3 text-right font-medium text-slate-200">{formatCurrency(item.unitPrice)}</td>
+                      <td className="p-3 text-right font-medium text-content-primary hidden sm:table-cell">{formatCurrency(item.unitPrice)}</td>
                       <td className="p-3 text-center">
-                        <div className="inline-flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-0.5">
+                        <div className="inline-flex items-center gap-0.5 sm:gap-1 bg-[#F5F7FA] dark:bg-slate-800 border border-borderline rounded-lg p-0.5">
                           <button
                             onClick={() => updateQty(idx, -1)}
-                            className="p-1 hover:bg-white/10 rounded-lg text-slate-300 transition"
+                            className="p-1 min-w-[28px] min-h-[28px] flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-content-primary transition-colors"
                           >
                             <Minus className="w-3 h-3" />
                           </button>
-                          <span className="w-7 text-center font-bold text-white">{item.quantity}</span>
+                          <span className="w-6 sm:w-7 text-center font-bold text-content-primary text-xs">{item.quantity}</span>
                           <button
                             onClick={() => updateQty(idx, 1)}
-                            className="p-1 hover:bg-white/10 rounded-lg text-slate-300 transition"
+                            className="p-1 min-w-[28px] min-h-[28px] flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-content-primary transition-colors"
                           >
                             <Plus className="w-3 h-3" />
                           </button>
                         </div>
                       </td>
-                      <td className="p-3 text-right text-slate-400 font-medium">{item.taxRate}%</td>
-                      <td className="p-3 text-right font-black text-white">
+                      <td className="p-3 text-right text-content-secondary font-medium hidden md:table-cell">{item.taxRate}%</td>
+                      <td className="p-3 text-right font-extrabold text-content-primary text-xs sm:text-sm whitespace-nowrap">
                         {formatCurrency(item.totalPrice)}
                       </td>
                       <td className="p-3 text-center">
                         <button
                           onClick={() => removeItem(idx)}
-                          className="p-1 text-slate-500 hover:text-coral transition"
+                          className="p-1 text-content-muted hover:text-[#DC4C4C] transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -517,16 +497,16 @@ export const PosPage: React.FC = () => {
         </div>
 
         {/* Right: Bill Summary & Checkout Panel (4 cols) */}
-        <div className="lg:col-span-4 glass-card p-5 flex flex-col justify-between space-y-4">
+        <div className="lg:col-span-4 bg-surface border border-borderline rounded-xl p-5 shadow-card flex flex-col justify-between space-y-4">
           <div className="space-y-3.5">
-            <h3 className="font-black text-base text-white border-b border-white/10 pb-3 flex items-center gap-2">
-              <Zap className="w-4 h-4 text-coral" />
+            <h3 className="font-bold text-base text-[#142D4E] dark:text-white border-b border-borderline pb-3 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-[#D97706]" />
               <span>Payment & Checkout</span>
             </h3>
 
             {/* Bill Discount Input */}
             <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-300 font-medium">{t('pos.billDiscount')}:</span>
+              <span className="text-content-secondary font-medium">{t('pos.billDiscount')}:</span>
               <div className="flex items-center gap-1 w-24">
                 <input
                   type="number"
@@ -534,46 +514,46 @@ export const PosPage: React.FC = () => {
                   max="100"
                   value={billDiscountPercent || ''}
                   onChange={(e) => setBillDiscountPercent(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
-                  className="w-full px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-center font-bold text-xs text-white"
+                  className="w-full px-2 py-1 bg-[#F5F7FA] dark:bg-slate-800 border border-borderline rounded text-center font-bold text-xs text-content-primary"
                   placeholder="0"
                 />
-                <span className="text-slate-400">%</span>
+                <span className="text-content-secondary">%</span>
               </div>
             </div>
 
             {/* Totals Breakdown */}
-            <div className="space-y-1.5 text-xs pt-2 border-t border-white/10">
-              <div className="flex justify-between text-slate-300">
+            <div className="space-y-1.5 text-xs pt-2 border-t border-borderline">
+              <div className="flex justify-between text-content-secondary">
                 <span>Subtotal:</span>
-                <span className="font-semibold text-white">{formatCurrency(subtotal)}</span>
+                <span className="font-semibold text-content-primary">{formatCurrency(subtotal)}</span>
               </div>
               {billDiscountAmount > 0 && (
-                <div className="flex justify-between text-coral font-semibold">
+                <div className="flex justify-between text-[#D97706] font-semibold">
                   <span>Discount ({billDiscountPercent}%):</span>
                   <span>-{formatCurrency(billDiscountAmount)}</span>
                 </div>
               )}
               {totalTax > 0 && (
-                <div className="flex justify-between text-slate-400">
+                <div className="flex justify-between text-content-secondary">
                   <span>GST Breakdown:</span>
                   <span>{formatCurrency(totalTax)}</span>
                 </div>
               )}
               {roundOff !== 0 && (
-                <div className="flex justify-between text-slate-400">
+                <div className="flex justify-between text-content-secondary">
                   <span>Round Off:</span>
                   <span>{roundOff > 0 ? '+' : ''}{roundOff.toFixed(2)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-lg font-black text-white border-t border-white/10 pt-2.5">
+              <div className="flex justify-between text-base font-extrabold text-[#142D4E] dark:text-white border-t border-borderline pt-2.5">
                 <span>Grand Total:</span>
-                <span className="text-coral text-2xl tracking-tight">{formatCurrency(roundedGrandTotal)}</span>
+                <span className="text-[#D97706] text-2xl tracking-tight">{formatCurrency(roundedGrandTotal)}</span>
               </div>
             </div>
 
             {/* Payment Method Selector */}
             <div className="pt-2">
-              <span className="text-xs font-bold text-slate-300 block mb-2">{t('pos.paymentMode')}</span>
+              <span className="text-xs font-bold text-content-secondary block mb-2">{t('pos.paymentMode')}</span>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 {['CASH', 'UPI', 'CARD', 'UDHAAR'].map((mode) => (
                   <button
@@ -584,10 +564,10 @@ export const PosPage: React.FC = () => {
                         setIsUpiQrOpen(true);
                       }
                     }}
-                    className={`p-2.5 rounded-xl font-bold border transition ${
+                    className={`p-2.5 rounded-lg font-bold border transition-colors ${
                       paymentMethod === mode
-                        ? 'bg-gradient-to-r from-aurora-purple/40 to-aurora-indigo/30 border-aurora-purple text-white shadow-glow-purple'
-                        : 'bg-white/5 text-slate-300 border-white/10 hover:border-white/20'
+                        ? 'bg-[#256D85] text-white border-[#256D85] shadow-sm'
+                        : 'bg-surface text-content-secondary border-borderline hover:border-[#256D85]'
                     }`}
                   >
                     {mode === 'UPI' ? 'UPI / QR Code' : mode === 'UDHAAR' ? 'Udhaar (Credit)' : mode}
@@ -598,40 +578,39 @@ export const PosPage: React.FC = () => {
 
             {/* Cash Tendering Quick Calculator */}
             {paymentMethod === 'CASH' && (
-              <div className="bg-white/5 p-3 rounded-2xl border border-white/10 space-y-2 text-xs">
+              <div className="bg-[#F5F7FA] dark:bg-slate-800/60 p-3 rounded-lg border border-borderline space-y-2 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-slate-300">Cash Received:</span>
+                  <span className="font-medium text-content-secondary">Cash Received:</span>
                   <input
                     type="number"
                     placeholder="₹ Received"
                     value={cashTendered}
                     onChange={(e) => setCashTendered(e.target.value)}
-                    className="w-28 px-2.5 py-1 bg-black/40 border border-white/10 rounded-lg text-right font-bold text-white"
+                    className="w-28 px-2.5 py-1 bg-surface border border-borderline rounded text-right font-bold text-content-primary"
                   />
                 </div>
                 {cashGivenNum > 0 && (
-                  <div className="flex items-center justify-between font-bold text-emerald-400 pt-1 border-t border-white/10">
+                  <div className="flex items-center justify-between font-bold text-emerald-600 pt-1 border-t border-borderline">
                     <span>Change to Return:</span>
-                    <span className="text-sm font-black">{formatCurrency(cashChange)}</span>
+                    <span className="text-sm font-extrabold">{formatCurrency(cashChange)}</span>
                   </div>
                 )}
               </div>
             )}
           </div>
 
-          {/* Checkout Action Button */}
-          <div className="pt-3 border-t border-white/10">
+          {/* Checkout Action Button (Amber Primary CTA) */}
+          <div className="pt-3 border-t border-borderline">
             <button
               onClick={() => handleCompleteSale()}
               disabled={cart.length === 0 || isSubmitting}
-              className="group relative w-full py-3.5 bg-gradient-to-r from-coral via-rose-500 to-aurora-purple hover:opacity-95 disabled:opacity-40 text-white font-black text-sm rounded-2xl shadow-glow-coral transition-all transform active:scale-95 flex items-center justify-center gap-2 overflow-hidden"
+              className="w-full py-3.5 bg-[#D97706] hover:bg-[#B45309] disabled:opacity-50 text-white font-extrabold text-sm rounded-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
             >
-              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
               <CheckCircle className="w-5 h-5" />
               <span>{isSubmitting ? 'Processing Bill...' : t('pos.completeSale')}</span>
             </button>
-            <p className="text-[10px] text-center text-slate-400 mt-2 font-mono">
-              Press <kbd className="bg-white/10 px-1.5 py-0.5 rounded border border-white/10">Ctrl+Enter</kbd> to quick-print
+            <p className="text-[10px] text-center text-content-secondary mt-2 font-mono">
+              Press <kbd className="bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-borderline">Ctrl+Enter</kbd> to quick-print
             </p>
           </div>
         </div>
@@ -648,96 +627,81 @@ export const PosPage: React.FC = () => {
       <UpiQrModal
         isOpen={isUpiQrOpen}
         onClose={() => setIsUpiQrOpen(false)}
-        upiId={business?.settings?.upiId || 'shop@upi'}
-        payeeName={business?.name || 'VyapaarFlow Store'}
+        upiId={business?.settings?.upiId || 'merchant@upi'}
+        upiName={business?.settings?.upiName || business?.name || 'Vyapaar Merchant'}
         amount={roundedGrandTotal}
-        onPaymentConfirmed={() => handleCompleteSale('UPI')}
+        invoiceNumber={`BILL-${Date.now().toString().slice(-4)}`}
+        onConfirmPayment={() => {
+          setIsUpiQrOpen(false);
+          handleCompleteSale('UPI');
+        }}
       />
 
-      {/* Customer Select / Add Modal */}
+      <ThermalReceiptModal
+        isOpen={isReceiptModalOpen}
+        onClose={() => setIsReceiptModalOpen(false)}
+        receiptText={thermalText}
+        invoiceNumber={createdSale?.invoiceNumber || ''}
+        onSwitchToA4={() => {
+          setIsReceiptModalOpen(false);
+          setIsA4ModalOpen(true);
+        }}
+      />
+
+      <A4InvoiceModal
+        isOpen={isA4ModalOpen}
+        onClose={() => setIsA4ModalOpen(false)}
+        sale={createdSale}
+        business={business}
+      />
+
+      {/* Add Customer Inline Modal */}
       <Modal
         isOpen={isCustomerModalOpen}
         onClose={() => setIsCustomerModalOpen(false)}
-        title="Select or Add Customer"
+        title={t('pos.addCustomer')}
         maxWidth="max-w-md"
       >
-        <div className="space-y-4 text-xs">
-          {/* Add New Customer Form */}
-          <form onSubmit={handleCreateCustomer} className="p-4 bg-white/5 rounded-2xl border border-white/10 space-y-2.5">
-            <span className="font-bold text-white block">+ Add New Customer</span>
+        <form onSubmit={handleCreateCustomer} className="space-y-4 text-xs">
+          <div>
+            <label className="block text-content-secondary font-medium mb-1">Customer Name</label>
             <input
               type="text"
-              placeholder="Full Name"
+              required
               value={newCustName}
               onChange={(e) => setNewCustName(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-xs text-white"
-              required
+              placeholder="e.g. Ramesh Kumar"
+              className="vf-input"
             />
+          </div>
+          <div>
+            <label className="block text-content-secondary font-medium mb-1">Mobile Number</label>
             <input
               type="tel"
-              placeholder="10-digit Mobile Number"
+              required
               value={newCustMobile}
               onChange={(e) => setNewCustMobile(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-xs text-white"
-              pattern="[6-9][0-9]{9}"
-              required
+              placeholder="10-digit mobile number"
+              className="vf-input"
             />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setIsCustomerModalOpen(false)}
+              className="vf-btn-outline"
+            >
+              Cancel
+            </button>
             <button
               type="submit"
-              className="w-full py-2.5 bg-gradient-to-r from-coral to-aurora-purple text-white font-bold rounded-xl shadow-glow-coral transition"
+              className="vf-btn-primary"
             >
-              Save & Select Customer
+              Add Customer
             </button>
-          </form>
-
-          {/* Existing Customers List */}
-          <div>
-            <span className="font-bold text-slate-400 block mb-2">Existing Customers:</span>
-            <div className="max-h-48 overflow-y-auto divide-y divide-white/5">
-              {customers.map((c: any) => (
-                <button
-                  key={c._id}
-                  onClick={() => {
-                    setSelectedCustomer(c);
-                    setIsCustomerModalOpen(false);
-                  }}
-                  className="w-full text-left p-3 hover:bg-white/5 rounded-xl flex items-center justify-between transition"
-                >
-                  <div>
-                    <span className="font-bold text-white">{c.name}</span>
-                    <span className="text-[11px] text-slate-400 block">{c.mobile}</span>
-                  </div>
-                  {c.currentBalance > 0 && (
-                    <span className="text-[10px] font-bold text-warning bg-warning/15 border border-warning/30 px-2 py-0.5 rounded-full">
-                      Udhaar: {formatCurrency(c.currentBalance)}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
           </div>
-        </div>
+        </form>
       </Modal>
-
-      {/* Thermal Receipt Modal */}
-      {createdSale && (
-        <ThermalReceiptModal
-          isOpen={isReceiptModalOpen}
-          onClose={() => setIsReceiptModalOpen(false)}
-          receiptText={thermalText}
-          invoiceNumber={createdSale.invoiceNumber}
-        />
-      )}
-
-      {/* A4 Tax Invoice Modal */}
-      {createdSale && (
-        <A4InvoiceModal
-          isOpen={isA4ModalOpen}
-          onClose={() => setIsA4ModalOpen(false)}
-          sale={createdSale}
-          business={business}
-        />
-      )}
     </div>
   );
 };
