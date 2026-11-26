@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { formatCurrency, formatDateTime } from '../lib/utils';
 import { useLanguage } from '../context/LanguageContext';
+import { useQuickBill } from '../context/QuickBillContext';
 import { NavLink } from 'react-router-dom';
 import {
   TrendingUp,
@@ -21,7 +22,8 @@ import {
   CheckCircle2,
   Users,
   ChevronRight,
-  PackageCheck
+  PackageCheck,
+  Camera
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -37,6 +39,7 @@ import {
 
 export const DashboardPage: React.FC = () => {
   const { t } = useLanguage();
+  const { openQuickBill } = useQuickBill();
 
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard-overview'],
@@ -106,14 +109,23 @@ export const DashboardPage: React.FC = () => {
 
         {/* Quick Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Primary CTA (Amber) */}
+          {/* Express Camera Quick Bill CTA (Amber Primary CTA) */}
+          <button
+            type="button"
+            onClick={openQuickBill}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#D97706] hover:bg-[#B45309] text-white text-xs font-bold rounded-lg shadow-sm transition-all duration-150 active:scale-[0.98]"
+          >
+            <Camera className="w-4 h-4" />
+            <span>Open Camera • Quick Bill</span>
+          </button>
+
           <NavLink
             to="/pos"
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#D97706] hover:bg-[#B45309] text-white text-xs font-bold rounded-lg shadow-sm transition-all duration-150 active:scale-[0.98]"
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-[#142D4E] hover:bg-[#0E2139] text-white text-xs font-bold rounded-lg shadow-sm transition-all duration-150 active:scale-[0.98]"
           >
             <ShoppingCart className="w-4 h-4" />
             <span>{t('dashboard.newBill')}</span>
-            <span className="bg-black/20 text-[10px] px-1.5 py-0.5 rounded font-mono font-normal">F2</span>
+            <span className="bg-black/25 text-[10px] px-1.5 py-0.5 rounded font-mono font-normal">F2</span>
           </NavLink>
 
           <NavLink
@@ -270,7 +282,7 @@ export const DashboardPage: React.FC = () => {
                   stroke="#256D85"
                   strokeWidth={2.5}
                   fillOpacity={1}
-                  fill="url"
+                  fill="url(#oceanSalesGrad)"
                   fillRule="evenodd"
                 />
               </AreaChart>
@@ -337,13 +349,23 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-5 space-y-3">
-            <NavLink
-              to="/pos"
+          <div className="mt-5 space-y-2.5">
+            <button
+              type="button"
+              onClick={openQuickBill}
               className="w-full py-3 px-4 bg-[#D97706] hover:bg-[#B45309] text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 text-xs transition-colors"
             >
+              <Camera className="w-4 h-4" />
+              <span>Open Camera & Quick Bill</span>
+              <ArrowUpRight className="w-4 h-4 ml-auto" />
+            </button>
+
+            <NavLink
+              to="/pos"
+              className="w-full py-2.5 px-4 bg-[#256D85] hover:bg-[#1C5467] text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 text-xs transition-colors"
+            >
               <ShoppingCart className="w-4 h-4" />
-              <span>Launch POS Billing Terminal</span>
+              <span>Launch Full POS Terminal</span>
               <ArrowUpRight className="w-4 h-4 ml-auto" />
             </NavLink>
 

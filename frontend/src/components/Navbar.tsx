@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useOffline } from '../context/OfflineContext';
 import { useTheme } from '../context/ThemeContext';
+import { useQuickBill } from '../context/QuickBillContext';
 import {
   Bell,
   Wifi,
@@ -12,7 +13,8 @@ import {
   LogOut,
   AlertCircle,
   Sun,
-  Moon
+  Moon,
+  Camera
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
@@ -22,6 +24,7 @@ export const Navbar: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
   const { isOnline, pendingSyncCount, isSyncing, syncOfflineBills } = useOffline();
   const { theme, toggleTheme } = useTheme();
+  const { openQuickBill } = useQuickBill();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -73,6 +76,20 @@ export const Navbar: React.FC = () => {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2 md:gap-3">
+        {/* Instant 1-Tap Quick Camera Scan & Bill */}
+        {business && (
+          <button
+            type="button"
+            onClick={openQuickBill}
+            className="flex items-center gap-1.5 bg-[#D97706] hover:bg-[#B45309] text-white font-bold text-xs px-3 py-1.5 rounded-lg shadow-sm transition-all active:scale-95"
+            title="Open Camera to Scan Barcode & Quick Bill"
+          >
+            <Camera className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Quick Scan</span>
+            <span className="sm:hidden">Scan</span>
+          </button>
+        )}
+
         {/* Offline / Online Sync Indicator */}
         {isOnline ? (
           <div className="flex items-center gap-2">

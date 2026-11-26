@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
 import { Modal } from './Modal';
-import { Printer, Download, Share2 } from 'lucide-react';
+import { Printer, Download, FileText } from 'lucide-react';
 
 interface ThermalReceiptModalProps {
   isOpen: boolean;
   onClose: () => void;
   receiptText: string;
   invoiceNumber: string;
+  onSwitchToA4?: () => void;
 }
 
 export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
   isOpen,
   onClose,
   receiptText,
-  invoiceNumber
+  invoiceNumber,
+  onSwitchToA4
 }) => {
   const [paperWidth, setPaperWidth] = useState<'58' | '80'>('58');
 
@@ -68,17 +70,27 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-3 pt-2">
+        <div className="flex items-center gap-2 pt-2">
           <button
             onClick={handlePrint}
             className="flex-1 py-2.5 bg-[#D97706] hover:bg-amber-600 text-white font-bold rounded-xl shadow-sm flex items-center justify-center gap-2 text-sm transition"
           >
             <Printer className="w-4 h-4" />
-            <span>Print Thermal Receipt</span>
+            <span>Print Receipt</span>
           </button>
+          {onSwitchToA4 && (
+            <button
+              onClick={onSwitchToA4}
+              className="px-3.5 py-2.5 bg-[#256D85] hover:bg-[#1C5467] text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 transition shadow-sm"
+              title="Open full A4 GST Invoice"
+            >
+              <FileText className="w-4 h-4" />
+              <span>A4 PDF</span>
+            </button>
+          )}
           <button
             onClick={handleDownloadTxt}
-            className="px-4 py-2.5 vf-btn-outline rounded-xl text-sm transition text-content-secondary font-semibold"
+            className="px-3.5 py-2.5 vf-btn-outline rounded-xl text-sm transition text-content-secondary font-semibold"
             title="Download text format"
           >
             <Download className="w-4 h-4" />

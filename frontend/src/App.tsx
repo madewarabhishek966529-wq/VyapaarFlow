@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { OfflineProvider } from './context/OfflineContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { QuickBillProvider } from './context/QuickBillContext';
 
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
@@ -63,30 +64,32 @@ const ProtectedLayout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-app text-content-primary relative overflow-x-hidden selection:bg-[#256D85] selection:text-white transition-colors duration-150">
-      <Navbar />
-      <div className="flex-1 flex overflow-hidden relative">
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-6 scroll-smooth bg-app">
-          <Suspense fallback={<PageSkeleton />}>
-            <Routes>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/pos" element={<PosPage />} />
-              <Route path="/inventory" element={<InventoryPage />} />
-              <Route path="/udhaar" element={<UdhaarPage />} />
-              <Route path="/customers" element={<CustomersPage />} />
-              <Route path="/suppliers" element={<SuppliersPage />} />
-              <Route path="/expenses" element={<ExpensesPage />} />
-              <Route path="/reports" element={<ReportsPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/admin" element={<AdminPage />} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-          </Suspense>
-        </main>
+    <QuickBillProvider>
+      <div className="min-h-screen flex flex-col bg-app text-content-primary relative overflow-x-hidden selection:bg-[#256D85] selection:text-white transition-colors duration-150">
+        <Navbar />
+        <div className="flex-1 flex overflow-hidden relative">
+          <Sidebar />
+          <main className="flex-1 overflow-y-auto pb-20 md:pb-6 scroll-smooth bg-app">
+            <Suspense fallback={<PageSkeleton />}>
+              <Routes>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/pos" element={<PosPage />} />
+                <Route path="/inventory" element={<InventoryPage />} />
+                <Route path="/udhaar" element={<UdhaarPage />} />
+                <Route path="/customers" element={<CustomersPage />} />
+                <Route path="/suppliers" element={<SuppliersPage />} />
+                <Route path="/expenses" element={<ExpensesPage />} />
+                <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/admin" element={<AdminPage />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </Suspense>
+          </main>
+        </div>
+        <BottomNav />
       </div>
-      <BottomNav />
-    </div>
+    </QuickBillProvider>
   );
 };
 

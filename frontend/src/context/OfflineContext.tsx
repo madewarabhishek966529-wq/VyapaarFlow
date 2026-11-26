@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { getPendingOfflineSales, markSaleSynced } from '../lib/idb';
 import { api } from '../lib/api';
 
@@ -13,6 +14,7 @@ interface OfflineContextType {
 const OfflineContext = createContext<OfflineContextType | undefined>(undefined);
 
 export const OfflineProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const queryClient = useQueryClient();
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   const [pendingSyncCount, setPendingSyncCount] = useState<number>(0);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -43,6 +45,11 @@ export const OfflineProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
 
       await refreshPendingCount();
+      if (pending.length > 0) {
+        ['dashboard-overview', 'products', 'products-pos', 'report-sales', 'udhaar-summary'].forEach((key) =>
+          queryClient.invalidateQueries({ queryKey: [key] })
+        );
+      }
     } finally {
       setIsSyncing(false);
     }

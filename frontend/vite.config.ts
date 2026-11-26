@@ -32,6 +32,7 @@ export default defineConfig({
           'vendor-query': ['@tanstack/react-query', 'idb'],
           'vendor-charts': ['recharts'],
           'vendor-pdf': ['jspdf', 'html2canvas'],
+          'vendor-scanner': ['@zxing/browser', '@zxing/library'],
           'vendor-icons': ['lucide-react']
         }
       }

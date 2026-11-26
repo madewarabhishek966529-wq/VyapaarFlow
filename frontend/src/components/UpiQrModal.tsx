@@ -10,6 +10,7 @@ interface UpiQrModalProps {
   upiId: string;
   payeeName: string;
   amount: number;
+  invoiceNumber?: string;
   onPaymentConfirmed: () => void;
 }
 
@@ -19,13 +20,16 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
   upiId,
   payeeName,
   amount,
+  invoiceNumber,
   onPaymentConfirmed
 }) => {
   const [copied, setCopied] = useState(false);
 
   const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(
     payeeName
-  )}&am=${amount.toFixed(2)}&cu=INR&tn=${encodeURIComponent('VyapaarFlow POS Bill')}`;
+  )}&am=${amount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(
+    invoiceNumber ? `VyapaarFlow ${invoiceNumber}` : 'VyapaarFlow POS Bill'
+  )}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(upiUri);

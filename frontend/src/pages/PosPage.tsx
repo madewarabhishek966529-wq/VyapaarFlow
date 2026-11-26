@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -43,6 +43,7 @@ export const PosPage: React.FC = () => {
   const { business } = useAuth();
   const { t } = useLanguage();
   const { isOnline, refreshPendingCount } = useOffline();
+  const queryClient = useQueryClient();
 
   // Search and cart state
   const [searchQuery, setSearchQuery] = useState('');
@@ -133,7 +134,7 @@ export const PosPage: React.FC = () => {
         productId: product._id,
         productName: product.name,
         sku: product.sku,
-        barcode: product.barcode,
+        barcode: product.barcode || undefined,
         unit: product.unit,
         quantity,
         unitPrice: price,
@@ -172,8 +173,16 @@ export const PosPage: React.FC = () => {
     setCart(cart.filter((_, i) => i !== index));
   };
 
-  const handleBarcodeScanned = (barcode: string) => {
-    const matched = products.find((p) => p.barcode === barcode || p.sku === barcode);
+  const handleBarcodeScanned = async (barcode: string) => {
+    let matched = products.find((p) => p.barcode === barcode || p.sku === barcode);
+    if (!matched && isOnline) {
+      try {
+        const res = await api.get(`/products/barcode/${encodeURIComponent(barcode)}`);
+        matched = res.data;
+      } catch {
+        // Not found in API
+      }
+    }
     if (matched) {
       addToCart(matched, 1);
       setIsScannerOpen(false);
@@ -251,6 +260,22 @@ export const PosPage: React.FC = () => {
         } catch (e) {
           console.warn('Could not fetch thermal receipt text:', e);
         }
+
+        // Refresh dashboard, inventory stock, reports, and udhaar balances immediately
+        [
+          'dashboard-overview',
+          'products',
+          'products-pos',
+          'products-all',
+          'customers',
+          'customers-pos',
+          'udhaar-summary',
+          'customers-udhaar',
+          'report-sales',
+          'report-pnl',
+          'report-tax',
+          'notifications'
+        ].forEach((key) => queryClient.invalidateQueries({ queryKey: [key] }));
       } else {
         await queueOfflineSale(salePayload);
         await refreshPendingCount();
@@ -628,10 +653,10 @@ export const PosPage: React.FC = () => {
         isOpen={isUpiQrOpen}
         onClose={() => setIsUpiQrOpen(false)}
         upiId={business?.settings?.upiId || 'merchant@upi'}
-        upiName={business?.settings?.upiName || business?.name || 'Vyapaar Merchant'}
+        payeeName={business?.settings?.upiName || business?.name || 'Vyapaar Merchant'}
         amount={roundedGrandTotal}
         invoiceNumber={`BILL-${Date.now().toString().slice(-4)}`}
-        onConfirmPayment={() => {
+        onPaymentConfirmed={() => {
           setIsUpiQrOpen(false);
           handleCompleteSale('UPI');
         }}
