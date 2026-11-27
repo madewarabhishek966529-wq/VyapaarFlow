@@ -19,12 +19,13 @@ export class NotificationController {
         $expr: { $lte: ['$currentStock', '$minStockLevel'] }
       }).limit(5).lean();
 
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
       for (const p of lowStockProducts) {
         const existing = await Notification.findOne({
           businessId,
           type: NotificationType.LOW_STOCK,
           referenceId: p._id.toString(),
-          isRead: false
+          $or: [{ isRead: false }, { createdAt: { $gte: oneDayAgo } }]
         });
         if (!existing) {
           await Notification.create({

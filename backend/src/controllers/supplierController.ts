@@ -16,7 +16,8 @@ export class SupplierController {
 
       const query: any = { businessId };
       if (search) {
-        const regex = new RegExp(String(search), 'i');
+        const safe = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(safe, 'i');
         query.$or = [{ name: regex }, { mobile: regex }, { contactPerson: regex }];
       }
 

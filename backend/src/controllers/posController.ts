@@ -318,7 +318,14 @@ export class PosController {
         return;
       }
 
-      const upiId = business.settings?.upiId || 'shop@upi';
+      const upiId = business.settings?.upiId?.trim();
+      if (!upiId) {
+        res.status(400).json({
+          success: false,
+          message: 'Store UPI ID is not configured. Please update it in Settings.'
+        });
+        return;
+      }
       const payeeName = business.settings?.upiName || business.name;
       const amtNum = parseFloat(amount as string) || 0;
 

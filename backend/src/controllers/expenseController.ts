@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import mongoose from 'mongoose';
 import { Expense } from '../models/Expense';
 import { expenseSchema } from '@vyapaarflow/shared';
 
@@ -31,11 +32,16 @@ export class ExpenseController {
       const limitNum = parseInt(limit as string, 10) || 100;
       const skip = (pageNum - 1) * limitNum;
 
+      const aggMatch = {
+        ...query,
+        businessId: new mongoose.Types.ObjectId(businessId!)
+      };
+
       const [expenses, total, summary] = await Promise.all([
         Expense.find(query).sort({ date: -1 }).skip(skip).limit(limitNum).lean(),
         Expense.countDocuments(query),
         Expense.aggregate([
-          { $match: query },
+          { $match: aggMatch },
           { $group: { _id: null, totalAmount: { $sum: '$amount' } } }
         ])
       ]);

@@ -223,9 +223,24 @@ export class ReportController {
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', 'attachment; filename="VyapaarFlow_Sales.csv"');
 
+      const escapeCsv = (val: any): string => {
+        const str = String(val ?? '');
+        const safe = /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+        return `"${safe.replace(/"/g, '""')}"`;
+      };
+
       let csv = 'Invoice Number,Date,Customer,Grand Total,Payment Method,Status,Paid Amount,Udhaar Amount\n';
       for (const s of sales) {
-        csv += `"${s.invoiceNumber}","${new Date(s.saleDate).toLocaleDateString('en-IN')}","${s.customerName || 'Walk-in'}","${s.grandTotal}","${s.paymentMethod}","${s.paymentStatus}","${s.amountPaid}","${s.udhaarAmount}"\n`;
+        csv += [
+          escapeCsv(s.invoiceNumber),
+          escapeCsv(new Date(s.saleDate).toLocaleDateString('en-IN')),
+          escapeCsv(s.customerName || 'Walk-in'),
+          escapeCsv(s.grandTotal),
+          escapeCsv(s.paymentMethod),
+          escapeCsv(s.paymentStatus),
+          escapeCsv(s.amountPaid),
+          escapeCsv(s.udhaarAmount)
+        ].join(',') + '\n';
       }
 
       res.send(csv);

@@ -56,6 +56,9 @@ export const UdhaarPage: React.FC = () => {
     onSuccess: (res: any) => {
       queryClient.invalidateQueries({ queryKey: ['udhaar-summary'] });
       queryClient.invalidateQueries({ queryKey: ['customers-udhaar'] });
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-ledger'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-overview'] });
       setIsRepayModalOpen(false);
       setSelectedCustomer(null);
       setRepayAmount('');
@@ -299,8 +302,8 @@ export const UdhaarPage: React.FC = () => {
             >
               <option value="CASH">Cash</option>
               <option value="UPI">UPI</option>
+              <option value="CARD">Card</option>
               <option value="BANK_TRANSFER">Bank Transfer / NEFT</option>
-              <option value="CHEQUE">Cheque</option>
             </select>
           </div>
 

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import mongoose from 'mongoose';
 import { Customer } from '../models/Customer';
 import { CustomerLedger } from '../models/CustomerLedger';
 import { Business } from '../models/Business';
@@ -61,10 +62,11 @@ export class UdhaarController {
    */
   static async getUdhaarSummary(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const businessId = req.businessId;
+      const businessId = req.businessId!;
+      const bId = new mongoose.Types.ObjectId(businessId);
 
       const summaryAgg = await CustomerLedger.aggregate([
-        { $match: { businessId: req.businessId as any } },
+        { $match: { businessId: bId } },
         {
           $group: {
             _id: null,
@@ -83,7 +85,7 @@ export class UdhaarController {
       ]);
 
       const customerAgg = await Customer.aggregate([
-        { $match: { businessId: req.businessId as any } },
+        { $match: { businessId: bId } },
         {
           $group: {
             _id: null,

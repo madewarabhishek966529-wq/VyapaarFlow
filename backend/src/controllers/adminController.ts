@@ -53,7 +53,8 @@ export class AdminController {
 
       if (plan) query['subscription.plan'] = plan;
       if (search) {
-        const regex = new RegExp(String(search), 'i');
+        const safe = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(safe, 'i');
         query.$or = [{ name: regex }, { ownerName: regex }, { mobile: regex }, { city: regex }];
       }
 

@@ -23,13 +23,17 @@ export class StockService {
     for (const item of items) {
       const product = await Product.findOne({ _id: item.productId, businessId });
       if (!product) {
-        throw new Error(`Product not found with ID: ${item.productId}`);
+        const err: any = new Error(`Product not found with ID: ${item.productId}`);
+        err.statusCode = 404;
+        throw err;
       }
 
       if (!allowNegativeStock && product.currentStock < item.quantity) {
-        throw new Error(
+        const err: any = new Error(
           `Insufficient stock for "${product.name}". Available: ${product.currentStock} ${product.unit}, Requested: ${item.quantity} ${product.unit}`
         );
+        err.statusCode = 400;
+        throw err;
       }
 
       const previousStock = product.currentStock;
@@ -104,7 +108,9 @@ export class StockService {
   ): Promise<{ previousStock: number; newStock: number }> {
     const product = await Product.findOne({ _id: productId, businessId });
     if (!product) {
-      throw new Error('Product not found');
+      const err: any = new Error('Product not found');
+      err.statusCode = 404;
+      throw err;
     }
 
     const previousStock = product.currentStock;

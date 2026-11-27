@@ -85,6 +85,10 @@ export const InventoryPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products-pos'] });
+      queryClient.invalidateQueries({ queryKey: ['products-all'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-overview'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       setIsAddEditModalOpen(false);
       setEditingProduct(null);
     },
@@ -97,6 +101,11 @@ export const InventoryPage: React.FC = () => {
     mutationFn: (payload: any) => api.post('/products/adjust-stock', payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products-pos'] });
+      queryClient.invalidateQueries({ queryKey: ['products-all'] });
+      queryClient.invalidateQueries({ queryKey: ['movements'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-overview'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       setIsAdjustModalOpen(false);
       setAdjustingProduct(null);
     },
@@ -546,7 +555,8 @@ export const InventoryPage: React.FC = () => {
               className="vf-input"
             >
               <option value="ADJUSTMENT_ADD">Stock-In (+ Add to Inventory)</option>
-              <option value="ADJUSTMENT_SUBTRACT">Stock-Out (- Deduct Damaged/Lost)</option>
+              <option value="ADJUSTMENT_SUB">Stock-Out (- Manual Adjustment)</option>
+              <option value="DAMAGE">Damaged / Expired Write-off (-)</option>
             </select>
           </div>
 
@@ -624,8 +634,8 @@ export const InventoryPage: React.FC = () => {
                     <tr key={m._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
                       <td className="p-2.5 text-content-secondary">{formatDate(m.createdAt)}</td>
                       <td className="p-2.5 font-bold text-content-primary">{m.type}</td>
-                      <td className={`p-2.5 text-center font-bold ${m.quantity > 0 ? 'text-emerald-600' : 'text-[#DC4C4C]'}`}>
-                        {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
+                      <td className={`p-2.5 text-center font-bold ${m.newStock < m.previousStock ? 'text-[#DC4C4C]' : 'text-emerald-600'}`}>
+                        {m.newStock < m.previousStock ? `-${Math.abs(m.quantity)}` : `+${Math.abs(m.quantity)}`}
                       </td>
                       <td className="p-2.5 text-center font-bold text-content-primary">{m.newStock}</td>
                       <td className="p-2.5 text-content-secondary">{m.reason || '—'}</td>

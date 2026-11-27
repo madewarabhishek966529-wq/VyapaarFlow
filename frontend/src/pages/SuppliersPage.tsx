@@ -61,6 +61,9 @@ export const SuppliersPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products-pos'] });
+      queryClient.invalidateQueries({ queryKey: ['products-all'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-overview'] });
       setIsPurchaseModalOpen(false);
       setSelectedSupplier(null);
       alert('Stock purchase recorded and inventory updated successfully!');

@@ -20,7 +20,8 @@ export class ProductController {
       }
 
       if (search) {
-        const regex = new RegExp(String(search), 'i');
+        const safe = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(safe, 'i');
         query.$or = [
           { name: regex },
           { sku: regex },
@@ -98,6 +99,9 @@ export class ProductController {
 
       const newProduct = await Product.create({
         ...validated,
+        barcode: validated.barcode || undefined,
+        supplierId: validated.supplierId || undefined,
+        expiryDate: validated.expiryDate ? new Date(validated.expiryDate) : undefined,
         businessId
       });
 
@@ -167,7 +171,12 @@ export class ProductController {
         });
       }
 
-      Object.assign(product, validated);
+      Object.assign(product, {
+        ...validated,
+        barcode: validated.barcode || undefined,
+        supplierId: validated.supplierId || undefined,
+        expiryDate: validated.expiryDate ? new Date(validated.expiryDate) : undefined
+      });
       await product.save();
 
       res.json({

@@ -34,8 +34,32 @@ export const ReportsPage: React.FC = () => {
   const pnlReport = pnlData?.data || {};
   const taxSlabs: any[] = taxData?.data || [];
 
-  const handleExportCsv = () => {
-    window.open('/api/reports/export-sales-csv', '_blank');
+  const handleExportCsv = async () => {
+    try {
+      const token = localStorage.getItem('vyapaarflow_token');
+      const businessId = localStorage.getItem('vyapaarflow_business_id');
+      const baseUrl = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || '/api';
+      const res = await fetch(`${baseUrl}/reports/export-sales-csv`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(businessId ? { 'x-business-id': businessId } : {})
+        }
+      });
+      if (!res.ok) {
+        throw new Error('Failed to export CSV');
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'VyapaarFlow_Sales.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert(err.message || 'Could not export CSV');
+    }
   };
 
   return (
@@ -108,7 +132,7 @@ export const ReportsPage: React.FC = () => {
             <div className="bg-surface p-5 rounded-xl border border-borderline shadow-card">
               <span className="text-[11px] font-bold text-content-secondary uppercase block">Period Total Sales</span>
               <div className="text-2xl font-extrabold text-[#142D4E] dark:text-white mt-1">
-                {formatCurrency(salesReport.totals?.grandTotal || 0)}
+                {formatCurrency(salesReport.totals?.totalSales || 0)}
               </div>
             </div>
             <div className="bg-surface p-5 rounded-xl border border-borderline shadow-card">
@@ -145,16 +169,24 @@ export const ReportsPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-borderline">
-                  {(salesReport.breakdown || []).map((row: any) => (
-                    <tr key={row._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                      <td className="p-4 font-bold text-content-primary">{row._id}</td>
-                      <td className="p-4 text-center font-semibold text-content-secondary">{row.invoiceCount}</td>
-                      <td className="p-4 text-right text-emerald-600 font-semibold">{formatCurrency(row.cashSales)}</td>
-                      <td className="p-4 text-right text-[#256D85] font-semibold">{formatCurrency(row.upiSales)}</td>
-                      <td className="p-4 text-right text-[#D97706] font-semibold">{formatCurrency(row.udhaarSales)}</td>
-                      <td className="p-4 text-right font-extrabold text-content-primary text-sm">{formatCurrency(row.totalSales)}</td>
+                  {(salesReport.periodData || []).length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-content-muted">
+                        No sales recorded for the selected period
+                      </td>
                     </tr>
-                  ))}
+                  ) : (
+                    (salesReport.periodData || []).map((row: any) => (
+                      <tr key={row._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                        <td className="p-4 font-bold text-content-primary">{row._id}</td>
+                        <td className="p-4 text-center font-semibold text-content-secondary">{row.invoiceCount}</td>
+                        <td className="p-4 text-right text-emerald-600 font-semibold">{formatCurrency(row.cashSales)}</td>
+                        <td className="p-4 text-right text-[#256D85] font-semibold">{formatCurrency(row.upiSales)}</td>
+                        <td className="p-4 text-right text-[#D97706] font-semibold">{formatCurrency(row.udhaarSales)}</td>
+                        <td className="p-4 text-right font-extrabold text-content-primary text-sm">{formatCurrency(row.totalSales)}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -241,12 +273,12 @@ export const ReportsPage: React.FC = () => {
                   </tr>
                 ) : (
                   taxSlabs.map((slab) => (
-                    <tr key={slab.taxRate} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                      <td className="p-4 font-bold text-content-primary">{slab.taxRate}% GST</td>
+                    <tr key={slab.rate} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                      <td className="p-4 font-bold text-content-primary">{slab.rate}% GST</td>
                       <td className="p-4 text-right font-medium text-content-primary">{formatCurrency(slab.taxableAmount)}</td>
                       <td className="p-4 text-right text-content-secondary">{formatCurrency(slab.cgst)}</td>
                       <td className="p-4 text-right text-content-secondary">{formatCurrency(slab.sgst)}</td>
-                      <td className="p-4 text-right font-extrabold text-[#142D4E] dark:text-white text-sm">{formatCurrency(slab.taxAmount)}</td>
+                      <td className="p-4 text-right font-extrabold text-[#142D4E] dark:text-white text-sm">{formatCurrency(slab.totalTax)}</td>
                     </tr>
                   ))
                 )}

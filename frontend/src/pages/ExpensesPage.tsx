@@ -286,8 +286,8 @@ export const ExpensesPage: React.FC = () => {
               >
                 <option value="CASH">Cash</option>
                 <option value="UPI">UPI</option>
+                <option value="CARD">Card</option>
                 <option value="BANK_TRANSFER">Bank Transfer</option>
-                <option value="CHEQUE">Cheque</option>
               </select>
             </div>
           </div>
