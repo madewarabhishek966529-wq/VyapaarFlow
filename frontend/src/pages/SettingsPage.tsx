@@ -7,7 +7,7 @@ import { formatCurrency } from '../lib/utils';
 import { Settings, Check, Store } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
-  const { business, updateBusinessSettings } = useAuth();
+  const { business, updateBusinessSettings, refreshProfile } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const queryClient = useQueryClient();
 
@@ -31,10 +31,10 @@ export const SettingsPage: React.FC = () => {
 
   const upgradeMutation = useMutation({
     mutationFn: (plan: string) => api.post('/subscriptions/checkout', { plan }),
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       queryClient.invalidateQueries({ queryKey: ['subscription-info'] });
+      await refreshProfile();
       alert(res.message);
-      window.location.reload();
     },
     onError: (err: any) => alert(`Upgrade error: ${err.message}`)
   });

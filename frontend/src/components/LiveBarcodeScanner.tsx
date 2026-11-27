@@ -7,14 +7,12 @@ import {
   Flashlight,
   RefreshCw,
   SwitchCamera,
-  Zap,
   ScanLine
 } from 'lucide-react';
 
 interface LiveBarcodeScannerProps {
   active: boolean;
   onScan: (code: string) => void;
-  sampleProducts?: any[];
   compact?: boolean;
 }
 
@@ -47,7 +45,6 @@ function playScanBeep() {
 export const LiveBarcodeScanner: React.FC<LiveBarcodeScannerProps> = ({
   active,
   onScan,
-  sampleProducts = [],
   compact = false
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -259,7 +256,7 @@ export const LiveBarcodeScanner: React.FC<LiveBarcodeScannerProps> = ({
             err?.name === 'NotAllowedError'
               ? 'Camera permission denied. Allow camera access in browser settings or enter barcode manually below.'
               : err?.name === 'NotFoundError'
-              ? 'No camera device found on this device. Enter barcode manually or tap a sample item below.'
+              ? 'No camera device found on this device. Enter barcode manually or scan with a USB/Bluetooth scanner below.'
               : err?.message || 'Unable to access camera. Enter barcode manually below.';
           setCameraError(msg);
         }
@@ -419,31 +416,6 @@ export const LiveBarcodeScanner: React.FC<LiveBarcodeScannerProps> = ({
           Find Product
         </button>
       </form>
-
-      {/* Instant-Scan Sample Product Shortcuts */}
-      {sampleProducts.length > 0 && (
-        <div className="border-t border-borderline pt-3">
-          <span className="text-xs font-bold text-content-primary flex items-center gap-1 mb-2">
-            <Zap className="w-3.5 h-3.5 text-[#D97706]" />
-            <span>Quick Tap-to-Scan Demo Items:</span>
-          </span>
-          <div className="max-h-36 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-1.5 pr-1">
-            {sampleProducts.slice(0, 6).map((p) => (
-              <button
-                key={p._id}
-                type="button"
-                onClick={() => handleDetectedCode(p.barcode || p.sku)}
-                className="w-full text-left p-2 rounded-lg bg-app hover:bg-[#256D85]/10 hover:border-[#256D85]/40 border border-borderline text-xs flex justify-between items-center transition"
-              >
-                <span className="font-semibold text-content-primary truncate">{p.name}</span>
-                <span className="font-mono text-[10px] bg-borderline/70 px-1.5 py-0.5 rounded text-content-secondary shrink-0 ml-2">
-                  {p.barcode || p.sku}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

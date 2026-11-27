@@ -125,7 +125,7 @@ export const AdminPage: React.FC = () => {
                     >
                       <option value="FREE">FREE</option>
                       <option value="PRO">PRO</option>
-                      <option value="ENTERPRISE">ENTERPRISE</option>
+                      <option value="BUSINESS">BUSINESS</option>
                     </select>
                   </td>
                 </tr>

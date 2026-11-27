@@ -646,14 +646,13 @@ export const PosPage: React.FC = () => {
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
         onScan={handleBarcodeScanned}
-        sampleProducts={products}
       />
 
       <UpiQrModal
         isOpen={isUpiQrOpen}
         onClose={() => setIsUpiQrOpen(false)}
-        upiId={business?.settings?.upiId || 'merchant@upi'}
-        payeeName={business?.settings?.upiName || business?.name || 'Vyapaar Merchant'}
+        upiId={business?.settings?.upiId || ''}
+        payeeName={business?.settings?.upiName || business?.name || ''}
         amount={roundedGrandTotal}
         invoiceNumber={`BILL-${Date.now().toString().slice(-4)}`}
         onPaymentConfirmed={() => {

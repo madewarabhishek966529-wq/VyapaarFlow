@@ -9,6 +9,7 @@ import { A4InvoiceModal } from './A4InvoiceModal';
 import { api } from '../lib/api';
 import { formatCurrency } from '../lib/utils';
 import { cacheProductsOffline, getCachedProducts, queueOfflineSale } from '../lib/idb';
+import { DEFAULT_CATEGORIES, UNITS, GST_SLABS } from '@vyapaarflow/shared';
 import { useAuth } from '../context/AuthContext';
 import { useOffline } from '../context/OfflineContext';
 import {
@@ -28,7 +29,9 @@ import {
   RotateCcw,
   PackageCheck,
   UserPlus,
-  LayoutDashboard
+  LayoutDashboard,
+  Search,
+  PackagePlus
 } from 'lucide-react';
 
 interface QuickBillModalProps {
@@ -36,7 +39,7 @@ interface QuickBillModalProps {
   onClose: () => void;
 }
 
-type Step = 'SCANNING' | 'PRODUCT_REVIEW' | 'PAYMENT' | 'DONE';
+type Step = 'SCANNING' | 'NEW_PRODUCT' | 'PRODUCT_REVIEW' | 'PAYMENT' | 'DONE';
 
 interface QuickCartItem {
   productId: string;
@@ -56,14 +59,26 @@ interface QuickCartItem {
 }
 
 export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose }) => {
-  const { business } = useAuth();
+  const { business, updateBusinessSettings } = useAuth();
   const { isOnline, refreshPendingCount } = useOffline();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   const [step, setStep] = useState<Step>('SCANNING');
   const [scanError, setScanError] = useState<string | null>(null);
+  const [unknownBarcode, setUnknownBarcode] = useState<string>('');
   const [isLookingUp, setIsLookingUp] = useState(false);
+  const [catalogSearch, setCatalogSearch] = useState('');
+
+  // Inline new-product registration state when scanning an unrecognized real barcode
+  const [newProdName, setNewProdName] = useState('');
+  const [newProdCategory, setNewProdCategory] = useState<string>(DEFAULT_CATEGORIES[0] || 'General');
+  const [newProdUnit, setNewProdUnit] = useState<string>('pcs');
+  const [newProdSellingPrice, setNewProdSellingPrice] = useState('');
+  const [newProdMrp, setNewProdMrp] = useState('');
+  const [newProdTaxRate, setNewProdTaxRate] = useState('0');
+  const [newProdStock, setNewProdStock] = useState('10');
+  const [isSavingProduct, setIsSavingProduct] = useState(false);
 
   // Scanned item currently under Product Details & Quality verification
   const [scannedProduct, setScannedProduct] = useState<any | null>(null);
@@ -75,6 +90,8 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
   const [cart, setCart] = useState<QuickCartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'UPI' | 'CARD' | 'UDHAAR'>('CASH');
   const [cashTendered, setCashTendered] = useState<string>('');
+  const [upiInput, setUpiInput] = useState('');
+  const [savingUpi, setSavingUpi] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
   const [showQuickCustomerForm, setShowQuickCustomerForm] = useState(false);
   const [newCustName, setNewCustName] = useState('');
@@ -88,7 +105,7 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
   const [isA4Open, setIsA4Open] = useState(false);
 
   // Products lookup cache
-  const { data: prodData } = useQuery({
+  const { data: prodData, refetch: refetchProducts } = useQuery({
     queryKey: ['products-pos'],
     queryFn: async () => {
       if (isOnline) {
@@ -113,11 +130,26 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
   const products: any[] = prodData || [];
   const customers: any[] = custData?.data?.customers || [];
 
+  const filteredCatalog = useMemo(() => {
+    const q = catalogSearch.trim().toLowerCase();
+    if (!q) return [];
+    return products
+      .filter(
+        (p) =>
+          p.name?.toLowerCase().includes(q) ||
+          p.sku?.toLowerCase().includes(q) ||
+          (p.barcode && p.barcode.toLowerCase().includes(q))
+      )
+      .slice(0, 6);
+  }, [products, catalogSearch]);
+
   // Reset cleanly every time the modal opens
   useEffect(() => {
     if (isOpen) {
       setStep('SCANNING');
       setScanError(null);
+      setUnknownBarcode('');
+      setCatalogSearch('');
       setScannedProduct(null);
       setPendingQty(1);
       setQualityChecked(true);
@@ -125,6 +157,7 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
       setCart([]);
       setPaymentMethod('CASH');
       setCashTendered('');
+      setUpiInput('');
       setSelectedCustomer(null);
       setShowQuickCustomerForm(false);
       setNewCustName('');
@@ -134,10 +167,15 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
     }
   }, [isOpen]);
 
-  // Helper to evaluate expiry & stock quality state
   const getProductQualityStatus = (product: any) => {
     if (!product) {
-      return { isExpired: false, isExpiringSoon: false, isOutOfStock: false, isLowStock: false, daysToExpiry: null as number | null };
+      return {
+        isExpired: false,
+        isExpiringSoon: false,
+        isOutOfStock: false,
+        isLowStock: false,
+        daysToExpiry: null as number | null
+      };
     }
     let isExpired = false;
     let isExpiringSoon = false;
@@ -155,9 +193,21 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
     return { isExpired, isExpiringSoon, isOutOfStock, isLowStock, daysToExpiry };
   };
 
-  // Lookup barcode across cached products, IDB, and live API
+  const selectProductForReview = (product: any) => {
+    const qStatus = getProductQualityStatus(product);
+    setScannedProduct(product);
+    setPendingQty(1);
+    setQualityChecked(!qStatus.isExpired && !qStatus.isOutOfStock);
+    setQualityNote('');
+    setScanError(null);
+    setUnknownBarcode('');
+    setCatalogSearch('');
+    setStep('PRODUCT_REVIEW');
+  };
+
   const handleCodeScanned = async (code: string) => {
     setScanError(null);
+    setUnknownBarcode('');
     const normalized = code.trim();
     if (!normalized) return;
 
@@ -178,7 +228,7 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
           matched = res.data;
         }
       } catch {
-        // fallback check offline IDB
+        // Fallback check offline IDB
       } finally {
         setIsLookingUp(false);
       }
@@ -190,17 +240,62 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
     }
 
     if (!matched) {
-      setScanError(`No product matched barcode or SKU "${normalized}". Scan again or select a demo item.`);
+      setUnknownBarcode(normalized);
+      setScanError(`Barcode "${normalized}" is not registered in your inventory yet.`);
       return;
     }
 
-    const qStatus = getProductQualityStatus(matched);
-    setScannedProduct(matched);
-    setPendingQty(1);
-    // Require manual confirmation checkbox when expired or out of stock
-    setQualityChecked(!qStatus.isExpired && !qStatus.isOutOfStock);
-    setQualityNote('');
-    setStep('PRODUCT_REVIEW');
+    selectProductForReview(matched);
+  };
+
+  const openInlineNewProductForm = () => {
+    setNewProdName('');
+    setNewProdSellingPrice('');
+    setNewProdMrp('');
+    setNewProdTaxRate('0');
+    setNewProdStock('10');
+    setStep('NEW_PRODUCT');
+  };
+
+  const handleRegisterScannedProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const sellPrice = parseFloat(newProdSellingPrice);
+    const mrp = parseFloat(newProdMrp || newProdSellingPrice);
+    if (!newProdName.trim() || isNaN(sellPrice) || sellPrice < 0) return;
+
+    setIsSavingProduct(true);
+    try {
+      const skuBase = unknownBarcode
+        .replace(/[^A-Za-z0-9]/g, '')
+        .slice(-10)
+        .toUpperCase();
+      const generatedSku = skuBase ? `SKU-${skuBase}` : `SKU-${Date.now().toString().slice(-6)}`;
+
+      const res = await api.post('/products', {
+        name: newProdName.trim(),
+        sku: generatedSku,
+        barcode: unknownBarcode || undefined,
+        category: newProdCategory,
+        unit: newProdUnit,
+        purchasePrice: Math.round(sellPrice * 0.8 * 100) / 100,
+        sellingPrice: sellPrice,
+        mrp: isNaN(mrp) ? sellPrice : mrp,
+        taxRate: parseFloat(newProdTaxRate) || 0,
+        currentStock: parseInt(newProdStock, 10) || 1,
+        minStockLevel: 5
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products-pos'] });
+      queryClient.invalidateQueries({ queryKey: ['products-all'] });
+      await refetchProducts();
+
+      selectProductForReview(res.data);
+    } catch (err: any) {
+      alert(`Could not save product: ${err.message}`);
+    } finally {
+      setIsSavingProduct(false);
+    }
   };
 
   const buildCartItem = (product: any, qty: number, verified: boolean): QuickCartItem => {
@@ -276,7 +371,6 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
     setCart(updated);
   };
 
-  // Totals calculation
   const { subtotal, totalTax, grandTotal, roundOff } = useMemo(() => {
     const sub = cart.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
     const tax = cart.reduce((acc, item) => acc + item.taxAmount, 0);
@@ -293,11 +387,37 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
   const cashGiven = parseFloat(cashTendered) || 0;
   const cashChange = Math.max(0, cashGiven - grandTotal);
 
-  const upiId = business?.settings?.upiId || 'merchant@upi';
-  const payeeName = business?.settings?.upiName || business?.name || 'VyapaarFlow Merchant';
-  const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(
-    payeeName
-  )}&am=${grandTotal.toFixed(2)}&cu=INR&tn=${encodeURIComponent('VyapaarFlow Quick Bill')}`;
+  const upiId = business?.settings?.upiId?.trim() || '';
+  const payeeName = business?.settings?.upiName || business?.name || 'Store';
+  const upiUri = upiId
+    ? `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(
+        payeeName
+      )}&am=${grandTotal.toFixed(2)}&cu=INR&tn=${encodeURIComponent('VyapaarFlow Quick Bill')}`
+    : '';
+
+  const handleSaveStoreUpi = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleaned = upiInput.trim();
+    if (!cleaned || !cleaned.includes('@')) {
+      alert('Please enter a valid UPI ID (e.g. yourstore@okicici)');
+      return;
+    }
+    setSavingUpi(true);
+    try {
+      await updateBusinessSettings({
+        settings: {
+          ...business?.settings,
+          upiId: cleaned,
+          upiName: business?.settings?.upiName || business?.name
+        }
+      });
+      setUpiInput('');
+    } catch (err: any) {
+      alert(`Could not save UPI ID: ${err.message}`);
+    } finally {
+      setSavingUpi(false);
+    }
+  };
 
   const handleCreateQuickCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -318,7 +438,7 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
   };
 
   const invalidateDashboardAndBusinessData = () => {
-    const keys = [
+    [
       'dashboard-overview',
       'products',
       'products-pos',
@@ -331,8 +451,7 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
       'report-pnl',
       'report-tax',
       'notifications'
-    ];
-    keys.forEach((key) => {
+    ].forEach((key) => {
       queryClient.invalidateQueries({ queryKey: [key] });
     });
   };
@@ -342,6 +461,11 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
 
     if (paymentMethod === 'UDHAAR' && !selectedCustomer) {
       alert('Please select or add a customer for Udhaar (Credit) billing.');
+      return;
+    }
+
+    if (paymentMethod === 'UPI' && !upiId) {
+      alert('Please save your store UPI ID above first, or select Cash/Card.');
       return;
     }
 
@@ -397,7 +521,7 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
   };
 
   const stepOrder: Step[] = ['SCANNING', 'PRODUCT_REVIEW', 'PAYMENT', 'DONE'];
-  const currentStepIndex = stepOrder.indexOf(step);
+  const effectiveIndex = step === 'NEW_PRODUCT' ? 1 : stepOrder.indexOf(step);
   const qualityStatus = getProductQualityStatus(scannedProduct);
 
   return (
@@ -417,8 +541,9 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
               { id: 'PAYMENT', label: '3. Payment' },
               { id: 'DONE', label: '4. Done' }
             ].map((item, idx) => {
-              const isActive = step === item.id;
-              const isDone = currentStepIndex > idx;
+              const isActive =
+                step === item.id || (step === 'NEW_PRODUCT' && item.id === 'PRODUCT_REVIEW');
+              const isDone = effectiveIndex > idx;
               return (
                 <div
                   key={item.id}
@@ -436,8 +561,8 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
             })}
           </div>
 
-          {/* Running Cart Indicator (when multi-item scanning) */}
-          {cart.length > 0 && (step === 'SCANNING' || step === 'PRODUCT_REVIEW') && (
+          {/* Running Cart Indicator */}
+          {cart.length > 0 && (step === 'SCANNING' || step === 'PRODUCT_REVIEW' || step === 'NEW_PRODUCT') && (
             <div className="flex items-center justify-between bg-[#142D4E] text-white px-3.5 py-2 rounded-xl text-xs">
               <span>
                 <strong>{cart.length}</strong> {cart.length === 1 ? 'item' : 'items'} added • Total:{' '}
@@ -455,28 +580,211 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
           )}
 
           {/* ===================================================== */}
-          {/* STEP 1: LIVE CAMERA BARCODE SCANNER                   */}
+          {/* STEP 1: LIVE CAMERA SCAN + REAL INVENTORY SEARCH      */}
           {/* ===================================================== */}
           {step === 'SCANNING' && (
             <div className="space-y-3">
               {scanError && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-300 text-xs font-semibold flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 shrink-0" />
-                  <span>{scanError}</span>
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs space-y-2">
+                  <div className="flex items-center gap-2 text-[#D97706] font-bold">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>{scanError}</span>
+                  </div>
+                  {unknownBarcode && isOnline && (
+                    <button
+                      type="button"
+                      onClick={openInlineNewProductForm}
+                      className="w-full py-2 bg-[#142D4E] hover:bg-[#0E2139] text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 transition"
+                    >
+                      <PackagePlus className="w-4 h-4 text-[#F0A43A]" />
+                      <span>Add & Register New Product ({unknownBarcode})</span>
+                    </button>
+                  )}
                 </div>
               )}
+
               {isLookingUp && (
                 <div className="p-2.5 rounded-xl bg-[#256D85]/10 text-[#256D85] text-xs font-semibold text-center">
                   Looking up scanned barcode in store catalog...
                 </div>
               )}
+
               <LiveBarcodeScanner
                 active={isOpen && step === 'SCANNING'}
                 onScan={handleCodeScanned}
-                sampleProducts={products}
                 compact
               />
+
+              {/* Real Store Catalog Search (for unbarcoded / loose retail items) */}
+              {products.length > 0 && (
+                <div className="border-t border-borderline pt-3 space-y-2">
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-content-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={catalogSearch}
+                      onChange={(e) => setCatalogSearch(e.target.value)}
+                      placeholder="Search your store catalog by product name or SKU..."
+                      className="vf-input pl-9 text-xs py-2"
+                    />
+                  </div>
+                  {filteredCatalog.length > 0 && (
+                    <div className="max-h-36 overflow-y-auto border border-borderline rounded-xl divide-y divide-borderline bg-surface">
+                      {filteredCatalog.map((p) => (
+                        <button
+                          key={p._id}
+                          type="button"
+                          onClick={() => selectProductForReview(p)}
+                          className="w-full text-left px-3 py-2 hover:bg-app flex items-center justify-between text-xs transition"
+                        >
+                          <div className="min-w-0 pr-2">
+                            <div className="font-bold text-content-primary truncate">{p.name}</div>
+                            <div className="text-[10px] text-content-secondary font-mono">
+                              {p.sku} • Stock: {p.currentStock} {p.unit}
+                            </div>
+                          </div>
+                          <span className="font-extrabold text-[#D97706] shrink-0">
+                            {formatCurrency(p.sellingPrice || p.mrp)}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+          )}
+
+          {/* ===================================================== */}
+          {/* INLINE STEP: REGISTER NEW SCANNED PRODUCT TO INVENTORY*/}
+          {/* ===================================================== */}
+          {step === 'NEW_PRODUCT' && (
+            <form onSubmit={handleRegisterScannedProduct} className="space-y-3 text-xs">
+              <div className="bg-app border border-borderline rounded-xl p-3 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-[#256D85] block">
+                    Register New Store Product
+                  </span>
+                  <span className="font-mono font-bold text-content-primary">
+                    Scanned Barcode: {unknownBarcode}
+                  </span>
+                </div>
+                <PackagePlus className="w-5 h-5 text-[#D97706]" />
+              </div>
+
+              <div>
+                <label className="font-bold text-content-primary block mb-1">Product Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={newProdName}
+                  onChange={(e) => setNewProdName(e.target.value)}
+                  placeholder="Enter product name & weight"
+                  className="vf-input text-xs font-semibold"
+                  autoFocus
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-content-primary block mb-1">Category *</label>
+                  <select
+                    value={newProdCategory}
+                    onChange={(e) => setNewProdCategory(e.target.value)}
+                    className="vf-input text-xs"
+                  >
+                    {DEFAULT_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="font-bold text-content-primary block mb-1">Unit</label>
+                  <select
+                    value={newProdUnit}
+                    onChange={(e) => setNewProdUnit(e.target.value)}
+                    className="vf-input text-xs"
+                  >
+                    {UNITS.map((u) => (
+                      <option key={u.code} value={u.code}>
+                        {u.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="font-bold text-content-primary block mb-1">Selling Price (₹) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required
+                    value={newProdSellingPrice}
+                    onChange={(e) => setNewProdSellingPrice(e.target.value)}
+                    className="vf-input text-xs font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-content-primary block mb-1">MRP (₹)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={newProdMrp}
+                    onChange={(e) => setNewProdMrp(e.target.value)}
+                    placeholder={newProdSellingPrice || '0'}
+                    className="vf-input text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-content-primary block mb-1">GST %</label>
+                  <select
+                    value={newProdTaxRate}
+                    onChange={(e) => setNewProdTaxRate(e.target.value)}
+                    className="vf-input text-xs"
+                  >
+                    {GST_SLABS.map((slab) => (
+                      <option key={slab} value={slab}>
+                        {slab}%
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="font-bold text-content-primary block mb-1">Opening Stock</label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={newProdStock}
+                    onChange={(e) => setNewProdStock(e.target.value)}
+                    className="vf-input text-xs font-bold"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setStep('SCANNING')}
+                  className="px-4 py-2.5 vf-btn-outline rounded-xl font-semibold"
+                >
+                  Back to Camera
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingProduct}
+                  className="flex-1 py-2.5 bg-[#D97706] hover:bg-[#B45309] text-white font-bold rounded-xl shadow-sm transition"
+                >
+                  {isSavingProduct ? 'Saving Product...' : 'Save Product & Continue to Bill →'}
+                </button>
+              </div>
+            </form>
           )}
 
           {/* ===================================================== */}
@@ -484,7 +792,6 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
           {/* ===================================================== */}
           {step === 'PRODUCT_REVIEW' && scannedProduct && (
             <div className="space-y-4">
-              {/* Product Summary Header */}
               <div className="bg-app border border-borderline rounded-xl p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -559,7 +866,7 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
                       <span className="font-bold text-content-primary">
                         {scannedProduct.expiryDate
                           ? new Date(scannedProduct.expiryDate).toLocaleDateString('en-IN')
-                          : 'Good / Non-Perishable'}
+                          : 'Good / Standard'}
                       </span>
                     </div>
                     <div className="bg-app px-2.5 py-2 rounded-lg border border-borderline col-span-2 sm:col-span-1">
@@ -591,7 +898,7 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
                       type="text"
                       value={qualityNote}
                       onChange={(e) => setQualityNote(e.target.value)}
-                      placeholder="Optional note (e.g. customer notified / replaced item)"
+                      placeholder="Optional quality note before confirming"
                       className="vf-input text-xs py-1.5"
                     />
                   )}
@@ -641,7 +948,6 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-2.5">
                 <button
                   type="button"
@@ -681,7 +987,6 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
           {/* ===================================================== */}
           {step === 'PAYMENT' && (
             <div className="space-y-4">
-              {/* Compact Cart List */}
               <div className="bg-app border border-borderline rounded-xl p-3 space-y-2 max-h-40 overflow-y-auto">
                 <div className="flex items-center justify-between text-[11px] font-bold text-content-secondary pb-1 border-b border-borderline">
                   <span>BILL ITEMS ({cart.length})</span>
@@ -736,7 +1041,6 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
                 ))}
               </div>
 
-              {/* Total Banner */}
               <div className="flex items-center justify-between bg-[#142D4E] text-white px-4 py-3 rounded-xl">
                 <div>
                   <span className="text-[11px] text-slate-300 block">Total Payable Amount</span>
@@ -747,7 +1051,6 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
                 <span className="text-2xl font-black text-[#F0A43A]">{formatCurrency(grandTotal)}</span>
               </div>
 
-              {/* Payment Type Options */}
               <div>
                 <span className="text-xs font-bold text-content-primary block mb-2">
                   Select Payment Type
@@ -780,7 +1083,6 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
                 </div>
               </div>
 
-              {/* Cash Helper */}
               {paymentMethod === 'CASH' && (
                 <div className="bg-app border border-borderline rounded-xl p-3 flex items-center justify-between gap-3 text-xs">
                   <div className="flex items-center gap-2">
@@ -801,25 +1103,51 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
                 </div>
               )}
 
-              {/* Live UPI QR Inline Preview */}
+              {/* Live Store UPI QR or Real Store UPI Setup */}
               {paymentMethod === 'UPI' && (
-                <div className="bg-app border border-borderline rounded-xl p-3 flex flex-col sm:flex-row items-center gap-4">
-                  <div className="p-2 bg-white rounded-xl border border-borderline shrink-0">
-                    <QRCodeSVG value={upiUri} size={115} level="M" includeMargin={false} />
-                  </div>
-                  <div className="text-center sm:text-left space-y-1 text-xs">
-                    <span className="font-bold text-[#142D4E] dark:text-white block">
-                      Scan with GPay / PhonePe / Paytm
-                    </span>
-                    <span className="font-mono text-[#D97706] font-bold block">{upiId}</span>
-                    <span className="text-[11px] text-content-secondary block">
-                      Customer scans exact {formatCurrency(grandTotal)}, then press Done below.
-                    </span>
-                  </div>
+                <div className="bg-app border border-borderline rounded-xl p-3">
+                  {!upiId ? (
+                    <form onSubmit={handleSaveStoreUpi} className="space-y-2 text-xs">
+                      <span className="font-bold text-[#D97706] block">
+                        Set your real Store UPI ID first to generate customer QR:
+                      </span>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. yourstore@okicici"
+                          value={upiInput}
+                          onChange={(e) => setUpiInput(e.target.value)}
+                          className="vf-input text-xs font-mono flex-1"
+                        />
+                        <button
+                          type="submit"
+                          disabled={savingUpi}
+                          className="px-3.5 py-2 bg-[#D97706] text-white font-bold rounded-lg text-xs shrink-0"
+                        >
+                          {savingUpi ? 'Saving...' : 'Save UPI'}
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      <div className="p-2 bg-white rounded-xl border border-borderline shrink-0">
+                        <QRCodeSVG value={upiUri} size={115} level="M" includeMargin={false} />
+                      </div>
+                      <div className="text-center sm:text-left space-y-1 text-xs">
+                        <span className="font-bold text-[#142D4E] dark:text-white block">
+                          Scan with GPay / PhonePe / Paytm
+                        </span>
+                        <span className="font-mono text-[#D97706] font-bold block">{upiId}</span>
+                        <span className="text-[11px] text-content-secondary block">
+                          Customer scans exact {formatCurrency(grandTotal)}, then press Done below.
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Udhaar Customer Picker */}
               {paymentMethod === 'UDHAAR' && (
                 <div className="bg-app border border-borderline rounded-xl p-3 space-y-2.5 text-xs">
                   <div className="flex items-center justify-between">
@@ -880,7 +1208,6 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
                 </div>
               )}
 
-              {/* Final Done Action */}
               <div className="flex gap-2.5 pt-1">
                 <button
                   type="button"
@@ -892,7 +1219,7 @@ export const QuickBillModal: React.FC<QuickBillModalProps> = ({ isOpen, onClose 
                 <button
                   type="button"
                   onClick={handleCompleteQuickBill}
-                  disabled={isSubmitting || cart.length === 0}
+                  disabled={isSubmitting || cart.length === 0 || (paymentMethod === 'UPI' && !upiId)}
                   className="flex-1 py-3 bg-[#16A34A] hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold rounded-xl shadow-sm flex items-center justify-center gap-2 text-sm transition"
                 >
                   <CheckCircle2 className="w-5 h-5" />

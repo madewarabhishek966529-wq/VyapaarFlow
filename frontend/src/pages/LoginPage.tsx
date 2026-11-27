@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Mail, Store, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Sparkles, Eye, EyeOff } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -9,6 +9,7 @@ export const LoginPage: React.FC = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,11 +25,6 @@ export const LoginPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const quickFill = (demoEmail: string, demoPass: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
   };
 
   return (
@@ -86,13 +82,21 @@ export const LoginPage: React.FC = () => {
               <div className="relative">
                 <Lock className="w-4 h-4 text-content-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-3.5 py-2.5 vf-input text-content-primary placeholder:text-content-muted font-medium text-xs"
-                  placeholder="••••••••"
+                  className="w-full pl-10 pr-10 py-2.5 vf-input text-content-primary placeholder:text-content-muted font-medium text-xs"
+                  placeholder="Enter your password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-content-muted hover:text-content-primary"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
 
@@ -106,39 +110,7 @@ export const LoginPage: React.FC = () => {
             </button>
           </form>
 
-          {/* Quick Demo Credentials Banner */}
-          <div className="pt-4 border-t border-borderline space-y-2.5">
-            <span className="text-[10px] font-bold text-content-muted block uppercase tracking-wider text-center">
-              Quick 1-Click Demo Login:
-            </span>
-            <div className="grid grid-cols-2 gap-2 text-[11px]">
-              <button
-                type="button"
-                onClick={() => quickFill('ramesh@kirana.com', 'password123')}
-                className="p-3 rounded-xl bg-app hover:bg-[#256D85]/10 border border-borderline hover:border-[#256D85]/40 text-left font-semibold text-content-primary transition"
-              >
-                <div className="flex items-center gap-1.5 text-[#256D85] font-bold">
-                  <Store className="w-3.5 h-3.5" />
-                  <span>Kirana Store</span>
-                </div>
-                <div className="text-[10px] text-content-secondary mt-1">ramesh@kirana.com</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => quickFill('admin@vyapaarflow.com', 'password123')}
-                className="p-3 rounded-xl bg-app hover:bg-[#256D85]/10 border border-borderline hover:border-[#256D85]/40 text-left font-semibold text-content-primary transition"
-              >
-                <div className="flex items-center gap-1.5 text-[#D97706] font-bold">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Super Admin</span>
-                </div>
-                <div className="text-[10px] text-content-secondary mt-1">admin@vyapaarflow.com</div>
-              </button>
-            </div>
-          </div>
-
-          <div className="text-center text-xs text-content-secondary pt-1">
+          <div className="text-center text-xs text-content-secondary pt-3 border-t border-borderline">
             <span>New shopkeeper? </span>
             <Link to="/register" className="font-bold text-[#256D85] hover:underline">
               Register New Business

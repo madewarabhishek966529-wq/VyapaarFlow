@@ -41,12 +41,9 @@ console.log(`  ${BOLD}🖥️  Frontend URL:${RESET}   ${GREEN}${BOLD}http://loc
 console.log(`  ${BOLD}🔌 Backend API:${RESET}     ${BLUE}${BOLD}http://localhost:5000${RESET}`);
 console.log(`  ${BOLD}🩺 API Health:${RESET}      ${YELLOW}http://localhost:5000/api/health${RESET}`);
 console.log(`----------------------------------------------------------------`);
-console.log(`  ${BOLD}👤 Pre-loaded Demo Kirana Store Credentials:${RESET}`);
-console.log(`     • ${BOLD}Email:${RESET}     ramesh@kirana.com`);
-console.log(`     • ${BOLD}Password:${RESET}  password123`);
-console.log(`     • ${BOLD}Quick PIN:${RESET} 1234`);
-console.log(`     • ${BOLD}Store:${RESET}     Shree Ganesh Supermarket & Kirana, Pune`);
-console.log(`     • ${BOLD}Admin:${RESET}     admin@vyapaarflow.com / password123`);
+console.log(`  ${BOLD}🏪 Getting Started:${RESET}`);
+console.log(`     • Open ${GREEN}http://localhost:3000${RESET} to register your business or sign in.`);
+console.log(`     • Set ${BOLD}MONGODB_URI${RESET} in backend/.env for persistent database storage.`);
 console.log(`----------------------------------------------------------------`);
 console.log(`  ${DIM}Press Ctrl+C at any time to cleanly stop all services.${RESET}`);
 console.log(`${CYAN}================================================================${RESET}\n`);

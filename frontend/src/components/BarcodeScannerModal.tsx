@@ -6,14 +6,12 @@ interface BarcodeScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onScan: (scannedCode: string) => void;
-  sampleProducts?: any[];
 }
 
 export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   isOpen,
   onClose,
-  onScan,
-  sampleProducts = []
+  onScan
 }) => {
   const handleScanned = (code: string) => {
     onScan(code);
@@ -22,11 +20,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Camera Barcode Scanner" maxWidth="max-w-md">
-      <LiveBarcodeScanner
-        active={isOpen}
-        onScan={handleScanned}
-        sampleProducts={sampleProducts}
-      />
+      <LiveBarcodeScanner active={isOpen} onScan={handleScanned} />
     </Modal>
   );
 };

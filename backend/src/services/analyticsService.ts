@@ -14,38 +14,61 @@ export class AnalyticsService {
     // Calculate today's date range in IST (UTC offset +5:30)
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // 1. Today's sales
-    const todaySalesAgg = await Sale.aggregate([
-      {
-        $match: {
-          businessId: bId,
-          isReturned: false,
-          saleDate: { $gte: startOfToday }
+    // 1. Today's sales & yesterday's sales (for real comparison)
+    const [todaySalesAgg, yesterdaySalesAgg] = await Promise.all([
+      Sale.aggregate([
+        {
+          $match: {
+            businessId: bId,
+            isReturned: false,
+            saleDate: { $gte: startOfToday }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalSales: { $sum: '$grandTotal' },
+            count: { $sum: 1 },
+            cashTotal: {
+              $sum: {
+                $cond: [{ $eq: ['$paymentMethod', 'CASH'] }, '$grandTotal', 0]
+              }
+            },
+            upiTotal: {
+              $sum: {
+                $cond: [{ $eq: ['$paymentMethod', 'UPI'] }, '$grandTotal', 0]
+              }
+            },
+            udhaarTotal: { $sum: '$udhaarAmount' }
+          }
         }
-      },
-      {
-        $group: {
-          _id: null,
-          totalSales: { $sum: '$grandTotal' },
-          count: { $sum: 1 },
-          cashTotal: {
-            $sum: {
-              $cond: [{ $eq: ['$paymentMethod', 'CASH'] }, '$grandTotal', 0]
-            }
-          },
-          upiTotal: {
-            $sum: {
-              $cond: [{ $eq: ['$paymentMethod', 'UPI'] }, '$grandTotal', 0]
-            }
-          },
-          udhaarTotal: { $sum: '$udhaarAmount' }
+      ]),
+      Sale.aggregate([
+        {
+          $match: {
+            businessId: bId,
+            isReturned: false,
+            saleDate: { $gte: startOfYesterday, $lt: startOfToday }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalSales: { $sum: '$grandTotal' }
+          }
         }
-      }
+      ])
     ]);
     const todaySales = todaySalesAgg[0]?.totalSales || 0;
     const todayBillsCount = todaySalesAgg[0]?.count || 0;
+    const yesterdaySales = yesterdaySalesAgg[0]?.totalSales || 0;
+    const salesGrowthPercent =
+      yesterdaySales > 0
+        ? Math.round(((todaySales - yesterdaySales) / yesterdaySales) * 1000) / 10
+        : null;
 
     // 2. Monthly sales
     const monthSalesAgg = await Sale.aggregate([
@@ -251,6 +274,8 @@ export class AnalyticsService {
     return {
       todaySales,
       todayBillsCount,
+      yesterdaySales,
+      salesGrowthPercent,
       monthlySales,
       todayExpenses,
       monthlyExpenses,

@@ -4,8 +4,6 @@ import jwt from 'jsonwebtoken';
 import app from './app';
 import { connectDatabase } from './config/database';
 import { CONFIG } from './config/constants';
-import { Business } from './models/Business';
-import { seedDatabase } from './scripts/seed';
 import { AuthUser } from './middleware/auth';
 
 const server = http.createServer(app);
@@ -70,13 +68,6 @@ const startServer = async () => {
   try {
     await connectDatabase();
 
-    // Check if database is empty -> auto seed demo store
-    const count = await Business.countDocuments();
-    if (count === 0) {
-      console.log('[Server] Database is empty. Auto-seeding Shree Ganesh Kirana demo store...');
-      await seedDatabase();
-    }
-    
     server.listen(CONFIG.PORT, () => {
       console.log(`=========================================`);
       console.log(`🚀 VyapaarFlow Backend is operational!`);

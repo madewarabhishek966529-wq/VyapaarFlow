@@ -49,20 +49,28 @@ export const DashboardPage: React.FC = () => {
 
   const metrics = data?.data || {};
 
-  const chartData = (metrics.last7DaysSales || []).map((item: any) => ({
-    date: item._id?.substring(5) || item._id, // MM-DD
-    sales: item.sales || 0,
-    bills: item.bills || 0
-  }));
+  const salesMap = new Map<string, { sales: number; bills: number }>();
+  (metrics.last7DaysSales || []).forEach((item: any) => {
+    if (item._id) {
+      salesMap.set(item._id, { sales: item.sales || 0, bills: item.bills || 0 });
+    }
+  });
 
-  const displayChartData = chartData.length > 1 ? chartData : [
-    { date: '11-18', sales: 4200, bills: 12 },
-    { date: '11-19', sales: 6850, bills: 18 },
-    { date: '11-20', sales: 5400, bills: 15 },
-    { date: '11-21', sales: 8900, bills: 24 },
-    { date: '11-22', sales: 11200, bills: 28 },
-    { date: '11-23', sales: metrics.todaySales || 14500, bills: metrics.todayBillsCount || 34 }
-  ];
+  const displayChartData = Array.from({ length: 7 }, (_, idx) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - idx));
+    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+      d.getDate()
+    ).padStart(2, '0')}`;
+    const entry = salesMap.get(iso);
+    return {
+      date: iso.substring(5),
+      sales: entry?.sales || 0,
+      bills: entry?.bills || 0
+    };
+  });
+
+  const hasChartSales = displayChartData.some((d) => d.sales > 0);
 
   // Official Chart Palette (Section 9): Ocean Blue, Amber, Deep Navy, Success Green, Information Blue
   const pieColors = ['#256D85', '#D97706', '#142D4E', '#16A34A', '#3685D6'];
@@ -163,7 +171,20 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="flex items-center justify-between text-xs text-content-secondary mt-2 pt-2 border-t border-borderline">
             <span>{metrics.todayBillsCount || 0} bills generated</span>
-            <span className="text-emerald-600 font-bold">+18.4%</span>
+            {typeof metrics.salesGrowthPercent === 'number' ? (
+              <span
+                className={`font-bold ${
+                  metrics.salesGrowthPercent >= 0 ? 'text-emerald-600' : 'text-[#DC4C4C]'
+                }`}
+              >
+                {metrics.salesGrowthPercent >= 0 ? '+' : ''}
+                {metrics.salesGrowthPercent}% vs yesterday
+              </span>
+            ) : (
+              <span className="text-[#256D85] font-semibold">
+                {(metrics.todayBillsCount || 0) > 0 ? 'Active today' : 'Ready for billing'}
+              </span>
+            )}
           </div>
         </div>
 
@@ -243,50 +264,61 @@ export const DashboardPage: React.FC = () => {
 
           {/* Area Chart with Ocean Blue fill */}
           <div className="h-56 w-full pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={displayChartData}>
-                <defs>
-                  <linearGradient id="oceanSalesGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#256D85" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#256D85" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <XAxis
-                  dataKey="date"
-                  stroke="#94A3B8"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={{ stroke: '#E5EBF2' }}
-                />
-                <YAxis
-                  stroke="#94A3B8"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={{ stroke: '#E5EBF2' }}
-                  tickFormatter={(val) => `₹${val}`}
-                />
-                <Tooltip
-                  formatter={(val: any) => [`₹${val}`, 'Revenue']}
-                  contentStyle={{
-                    backgroundColor: '#FFFFFF',
-                    color: '#253449',
-                    borderRadius: '8px',
-                    border: '1px solid #E5EBF2',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    fontSize: '12px'
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="sales"
-                  stroke="#256D85"
-                  strokeWidth={2.5}
-                  fillOpacity={1}
-                  fill="url(#oceanSalesGrad)"
-                  fillRule="evenodd"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {!hasChartSales ? (
+              <div className="h-full flex flex-col items-center justify-center text-center border border-dashed border-borderline rounded-lg bg-[#F5F7FA] dark:bg-[#1C2C40]/40 p-4">
+                <span className="text-xs font-bold text-[#142D4E] dark:text-white">
+                  No sales recorded in the last 7 days yet
+                </span>
+                <span className="text-[11px] text-content-secondary mt-1">
+                  Scan or create your first bill to view real-time daily sales trends here.
+                </span>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={displayChartData}>
+                  <defs>
+                    <linearGradient id="oceanSalesGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#256D85" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#256D85" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    dataKey="date"
+                    stroke="#94A3B8"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={{ stroke: '#E5EBF2' }}
+                  />
+                  <YAxis
+                    stroke="#94A3B8"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={{ stroke: '#E5EBF2' }}
+                    tickFormatter={(val) => `₹${val}`}
+                  />
+                  <Tooltip
+                    formatter={(val: any) => [`₹${val}`, 'Revenue']}
+                    contentStyle={{
+                      backgroundColor: '#FFFFFF',
+                      color: '#253449',
+                      borderRadius: '8px',
+                      border: '1px solid #E5EBF2',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                      fontSize: '12px'
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="sales"
+                    stroke="#256D85"
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#oceanSalesGrad)"
+                    fillRule="evenodd"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
 
           <div className="grid grid-cols-3 gap-3 pt-4 border-t border-borderline mt-3">

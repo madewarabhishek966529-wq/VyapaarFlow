@@ -76,7 +76,7 @@ export class SubscriptionController {
   }
 
   /**
-   * Simulate subscription checkout / upgrade (with simulated Razorpay order ID and verification)
+   * Process subscription plan change / upgrade in the database
    */
   static async checkout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
